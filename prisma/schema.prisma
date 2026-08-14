@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  pinHash      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Sister {
+  id           String   @id @default(uuid())
+  name         String
+  photoUrl     String?
+  finalMessage String
+  themeId      String?
+  songId       String?
+  motionStyle  String   @default("cinematic")
+  status       String   @default("draft") // draft, published
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  publishedAt  DateTime?
+
+  access            SisterAccess?
+  questions         Question[]
+  memories          Memory[]
+  responses         UserResponse[]
+  aiRecommendations AIRecommendation[]
+  sessions          ExperienceSession[]
+}
+
+model SisterAccess {
+  id             String    @id @default(uuid())
+  sisterId       String    @unique
+  sister         Sister    @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  codeHash       String
+  isActive       Boolean   @default(true)
+  failedAttempts Int       @default(0)
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  sisterId      String
+  sister        Sister   @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  question      String
+  type          String   // multiple_choice, yes_no, emoji, text, rating, image_choice
+  displayOrder  Int      @default(0)
+  animationType String   @default("typewriter")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  options       AnswerOption[]
+  memories      Memory[]
+  responses     UserResponse[]
+}
+
+model AnswerOption {
+  id              String    @id @default(uuid())
+  questionId      String
+  question        Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label           String
+  value           String
+  responseMessage String?
+  animationType   String?   @default("confetti")
+  nextQuestionId  String?
+  memoryId        String?
+  createdAt       DateTime  @default(now())
+
+  memory          Memory?   @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+}
+
+model Memory {
+  id          String   @id @default(uuid())
+  sisterId    String
+  sister      Sister   @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  questionId  String?
+  question    Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  imageUrl    String
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  answerOptions AnswerOption[]
+}
+
+model UserResponse {
+  id          String   @id @default(uuid())
+  sisterId    String
+  sister      Sister   @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer      String
+  sessionId   String
+  answeredAt  DateTime @default(now())
+}
+
+model Theme {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String
+  configuration String   // JSON string of colors, background style, particle speed
+  previewImage  String?
+  createdAt     DateTime @default(now())
+}
+
+model Song {
+  id          String   @id @default(uuid())
+  title       String
+  artist      String
+  mood        String
+  genre       String?
+  language    String?  @default("Hindi/English")
+  energy      String?  @default("medium")
+  duration    String?
+  audioUrl    String
+  coverUrl    String?
+  metadata    String?  // JSON string
+  createdAt   DateTime @default(now())
+}
+
+model AIRecommendation {
+  id                  String   @id @default(uuid())
+  sisterId            String
+  sister              Sister   @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  messageSnapshot     String
+  mood                String
+  tone                String
+  visualDirection     String
+  motionStyle         String
+  recommendedThemeId String?
+  recommendedSongId  String?
+  aiResponse          String   // Raw JSON string from Gemini
+  createdAt           DateTime @default(now())
+}
+
+model ExperienceSession {
+  id                String    @id @default(uuid())
+  sisterId          String
+  sister            Sister    @relation(fields: [sisterId], references: [id], onDelete: Cascade)
+  startedAt         DateTime  @default(now())
+  lastActivityAt    DateTime  @updatedAt
+  completedAt       DateTime?
+  currentQuestionId String?
+}
