@@ -141,258 +141,206 @@ export default function CreateSisterWizardPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 p-4 sm:p-6 pb-24 text-white">
+    <div className="max-w-3xl mx-auto space-y-8 p-4 sm:p-6 pb-24 text-gray-900">
       {/* Header */}
       <div>
-        <h1 className="font-serif text-3xl font-bold text-white">Create Sister Experience</h1>
-        <p className="text-sm text-gray-300">
+        <h1 className="font-serif text-3xl font-bold text-gray-900">Create Sister Experience</h1>
+        <p className="text-sm text-gray-600 font-semibold">
           Follow the step-by-step wizard to build a personalized Rakhi surprise.
         </p>
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-between border-b border-gold/30 pb-4 text-xs font-semibold text-gray-400">
-        <span className={step >= 1 ? "text-gold font-bold" : ""}>1. Basic Info</span>
+      <div className="flex items-center justify-between border-b border-rose-200 pb-4 text-xs font-bold text-gray-500">
+        <span className={step >= 1 ? "text-[#E07A5F]" : ""}>1. Basic Info</span>
         <span>→</span>
-        <span className={step >= 2 ? "text-gold font-bold" : ""}>2. Final Letter</span>
+        <span className={step >= 2 ? "text-[#E07A5F]" : ""}>2. Final Letter</span>
         <span>→</span>
-        <span className={step >= 3 ? "text-gold font-bold" : ""}>3. AI Personalization</span>
+        <span className={step >= 3 ? "text-[#E07A5F]" : ""}>3. AI Personalization</span>
         <span>→</span>
-        <span className={step >= 4 ? "text-gold font-bold" : ""}>4. Access Code</span>
+        <span className={step >= 4 ? "text-[#E07A5F]" : ""}>4. Access Code</span>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 font-bold text-xs">
+          {error}
+        </div>
+      )}
 
       {/* STEP 1: Basic Info */}
       {step === 1 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="bg-[#14121B] border border-gold/30 rounded-3xl p-6 space-y-5 shadow-xl">
-            <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-gold" /> Step 1: Basic Information
-            </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md"
+        >
+          <h2 className="font-serif text-xl font-bold text-gray-900">Step 1: Sister Details</h2>
 
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gold/90 mb-2 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                 SISTER NAME *
               </label>
               <input
                 type="text"
+                required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Anusha"
-                className="w-full p-4 rounded-xl bg-black border border-gold/40 text-white font-bold focus:border-gold focus:outline-none"
+                placeholder="e.g. Anusha, Sravani, Priyanka..."
+                className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-bold focus:border-[#E07A5F] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gold/90 mb-2 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                 PHOTO URL (OPTIONAL)
               </label>
               <input
-                type="text"
+                type="url"
                 value={photoUrl}
                 onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full p-4 rounded-xl bg-black border border-gold/40 text-white font-bold focus:border-gold focus:outline-none"
+                placeholder="https://images.unsplash.com/..."
+                className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-bold focus:border-[#E07A5F] focus:outline-none"
               />
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              if (!name.trim()) setError("Please enter sister's name.");
-              else {
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={() => {
+                if (!name.trim()) {
+                  setError("Sister name is required.");
+                  return;
+                }
                 setError(null);
                 setStep(2);
-              }
-            }}
-            style={{
-              background: "linear-gradient(135deg, #D4AF37 0%, #F4E091 50%, #AA820A 100%)",
-            }}
-            className="w-full py-4 rounded-2xl text-black font-extrabold text-sm tracking-wider shadow-xl shadow-gold/20 flex items-center justify-center gap-2 cursor-pointer border border-goldlight"
-          >
-            <span>NEXT: WRITE FINAL LETTER</span>
-            <ArrowRight className="w-4 h-4 text-black" />
-          </button>
+              }}
+              style={{
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+              }}
+              className="py-3.5 px-6 rounded-xl text-white font-extrabold text-xs flex items-center gap-2 shadow-md cursor-pointer border border-rose-200"
+            >
+              <span>NEXT: FINAL LETTER</span>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </button>
+          </div>
         </motion.div>
       )}
 
-      {/* STEP 2: Final Message */}
+      {/* STEP 2: Final Letter */}
       {step === 2 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="bg-[#14121B] border border-gold/30 rounded-3xl p-6 space-y-5 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-gold" /> Step 2: Personal Final Message
-              </h2>
-
-              <button
-                type="button"
-                onClick={() => setRephraseModalOpen(true)}
-                disabled={!finalMessage.trim()}
-                className="px-3.5 py-2 rounded-xl bg-purple-950 border border-purple-700 text-purple-200 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-900 cursor-pointer shadow-md"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>REPHRASE WITH AI</span>
-              </button>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gold/90 mb-2 uppercase tracking-wider">
-                FINAL LETTER FOR {name.toUpperCase() || "SISTER"}
-              </label>
-              <textarea
-                rows={6}
-                value={finalMessage}
-                onChange={(e) => setFinalMessage(e.target.value)}
-                placeholder="Write your heartfelt message here..."
-                className="w-full p-4 rounded-xl bg-black border border-gold/40 text-white font-serif leading-relaxed focus:border-gold focus:outline-none resize-none"
-              />
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl font-bold text-gray-900">Step 2: Write Final Letter</h2>
+            <button
+              onClick={() => setRephraseModalOpen(true)}
+              disabled={!finalMessage.trim()}
+              className="px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-300 text-purple-900 font-bold text-xs flex items-center gap-2 cursor-pointer shadow-xs hover:bg-purple-100"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-purple-700" />
+              <span>REPHRASE WITH AI</span>
+            </button>
           </div>
 
-          <div className="flex gap-3">
+          <div>
+            <textarea
+              rows={8}
+              value={finalMessage}
+              onChange={(e) => setFinalMessage(e.target.value)}
+              placeholder="Dear sister, thank you for always being there for me..."
+              className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-serif text-base font-bold focus:border-[#E07A5F] focus:outline-none resize-none shadow-inner"
+            />
+          </div>
+
+          <div className="flex justify-between pt-4">
             <button
               onClick={() => setStep(1)}
-              className="py-4 px-6 rounded-xl bg-black border border-white/20 text-white font-bold text-sm cursor-pointer"
+              className="py-3.5 px-6 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
             >
               BACK
             </button>
             <button
-              onClick={() => {
-                setStep(3);
-                if (finalMessage.trim()) handleRunAI();
-              }}
+              onClick={() => setStep(3)}
               style={{
-                background: "linear-gradient(135deg, #D4AF37 0%, #F4E091 50%, #AA820A 100%)",
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
               }}
-              className="flex-1 py-4 rounded-2xl text-black font-extrabold text-sm tracking-wider shadow-xl shadow-gold/20 flex items-center justify-center gap-2 cursor-pointer border border-goldlight"
+              className="py-3.5 px-6 rounded-xl text-white font-extrabold text-xs flex items-center gap-2 shadow-md cursor-pointer border border-rose-200"
             >
-              <span>NEXT: RUN AI PERSONALIZATION</span>
-              <ArrowRight className="w-4 h-4 text-black" />
+              <span>NEXT: AI PERSONALIZATION</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </button>
           </div>
         </motion.div>
       )}
 
-      {/* STEP 3: AI Personalization & Review */}
+      {/* STEP 3: AI & Theme Personalization */}
       {step === 3 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="bg-[#14121B] border border-gold/30 rounded-3xl p-6 space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/20 border border-gold/40 text-gold text-xs font-bold uppercase mb-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Gemini 2.5 Flash</span>
-                </div>
-                <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
-                  <Wand2 className="w-5 h-5 text-gold" /> Step 3: AI Personalization
-                </h2>
-              </div>
-
-              <button
-                onClick={handleRunAI}
-                disabled={aiAnalyzing}
-                className="px-4 py-2.5 rounded-xl bg-black border border-gold/50 text-gold text-xs font-bold flex items-center gap-2 hover:bg-gold/10 cursor-pointer"
-              >
-                <Wand2 className="w-4 h-4" />
-                <span>{aiAnalyzing ? "Analyzing..." : "RE-RUN GEMINI AI"}</span>
-              </button>
-            </div>
-
-            {/* AI Breakdown Badge */}
-            {aiResult && (
-              <div className="p-4 rounded-2xl bg-gold/10 border border-gold/40 space-y-2 text-xs text-goldlight">
-                <div className="font-bold text-white uppercase tracking-wider text-xs">
-                  Detected Emotion & Mood:
-                </div>
-                <div className="flex flex-wrap gap-2 text-sm font-bold text-gold">
-                  <span className="bg-black/60 px-3 py-1 rounded-lg border border-gold/30">Mood: {aiResult.mood}</span>
-                  <span className="bg-black/60 px-3 py-1 rounded-lg border border-gold/30">Tone: {aiResult.tone}</span>
-                  <span className="bg-black/60 px-3 py-1 rounded-lg border border-gold/30">Visual: {aiResult.visualDirection}</span>
-                </div>
-                {aiResult.reasoning && (
-                  <p className="italic text-gray-300 font-serif pt-1">&ldquo;{aiResult.reasoning}&rdquo;</p>
-                )}
-              </div>
-            )}
-
-            {/* Selection Overrides */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-              {/* Theme Dropdown */}
-              <div className="space-y-2 bg-black/60 p-4 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-2 text-xs font-bold text-gold uppercase">
-                  <Palette className="w-4 h-4" />
-                  <span>Theme</span>
-                </div>
-                <select
-                  value={themeId}
-                  onChange={(e) => setThemeId(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-black border border-gold/40 text-white font-bold text-xs focus:outline-none focus:border-gold"
-                >
-                  {themes.map((th) => (
-                    <option key={th.id} value={th.id}>
-                      {th.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Song Dropdown */}
-              <div className="space-y-2 bg-black/60 p-4 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-2 text-xs font-bold text-gold uppercase">
-                  <Music className="w-4 h-4" />
-                  <span>Song</span>
-                </div>
-                <select
-                  value={songId}
-                  onChange={(e) => setSongId(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-black border border-gold/40 text-white font-bold text-xs focus:outline-none focus:border-gold"
-                >
-                  {songs.map((sg) => (
-                    <option key={sg.id} value={sg.id}>
-                      {sg.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Motion Dropdown */}
-              <div className="space-y-2 bg-black/60 p-4 rounded-2xl border border-white/10">
-                <div className="flex items-center gap-2 text-xs font-bold text-gold uppercase">
-                  <Sliders className="w-4 h-4" />
-                  <span>Motion</span>
-                </div>
-                <select
-                  value={motionStyle}
-                  onChange={(e) => setMotionStyle(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-black border border-gold/40 text-white font-bold text-xs focus:outline-none focus:border-gold"
-                >
-                  <option value="slow_emotional">Slow & Emotional</option>
-                  <option value="playful_bounce">Playful Bounce</option>
-                  <option value="dramatic_zoom">Dramatic Zoom</option>
-                  <option value="elegant_fade">Elegant Soft Fade</option>
-                </select>
-              </div>
-            </div>
-
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-200 pb-4">
             <div>
-              <label className="block text-xs font-semibold text-gold/90 mb-2 uppercase tracking-wider">
-                CUSTOM 6-DIGIT CODE (OPTIONAL - LEAVE BLANK TO AUTO-GENERATE)
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                value={customCode}
-                onChange={(e) => setCustomCode(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="e.g. 280826"
-                className="w-full p-4 rounded-xl bg-black border border-gold/40 text-white font-mono text-center tracking-widest text-xl font-bold focus:border-gold focus:outline-none"
-              />
+              <h2 className="font-serif text-xl font-bold text-gray-900">Step 3: AI & Theme Selection</h2>
+              <p className="text-xs text-gray-600 font-semibold">Gemini 2.5 Flash custom engine analysis</p>
             </div>
+
+            <button
+              onClick={handleRunAI}
+              disabled={aiAnalyzing || !finalMessage.trim()}
+              style={{
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+              }}
+              className="py-3 px-5 rounded-xl text-white font-extrabold text-xs flex items-center gap-2 shadow-md cursor-pointer border border-rose-200"
+            >
+              {aiAnalyzing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  <span>ANALYZING...</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 text-white" />
+                  <span>GENERATE AI THEME</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="flex gap-3">
+          {aiResult && (
+            <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 space-y-2 text-xs text-purple-900 shadow-xs">
+              <div className="font-bold text-purple-900 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-700" /> Gemini 2.5 AI Analysis:
+              </div>
+              <p>Mood: {aiResult.mood} • Tone: {aiResult.tone}</p>
+              <p className="italic text-purple-800 font-serif font-semibold">&ldquo;{aiResult.reasoning}&rdquo;</p>
+            </div>
+          )}
+
+          {/* Code Customization */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+              CUSTOM 6-DIGIT ACCESS CODE (OPTIONAL)
+            </label>
+            <input
+              type="text"
+              maxLength={6}
+              value={customCode}
+              onChange={(e) => setCustomCode(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Auto-generated if left blank (e.g. 280826)"
+              className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-mono font-bold focus:border-[#E07A5F] focus:outline-none tracking-widest text-center text-lg"
+            />
+          </div>
+
+          <div className="flex justify-between pt-4">
             <button
               onClick={() => setStep(2)}
-              className="py-4 px-6 rounded-xl bg-black border border-white/20 text-white font-bold text-sm cursor-pointer"
+              className="py-3.5 px-6 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
             >
               BACK
             </button>
@@ -400,69 +348,65 @@ export default function CreateSisterWizardPage() {
               onClick={handleCreateSister}
               disabled={submitting}
               style={{
-                background: "linear-gradient(135deg, #D4AF37 0%, #F4E091 50%, #AA820A 100%)",
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
               }}
-              className="flex-1 py-4 rounded-2xl text-black font-extrabold text-sm tracking-wider shadow-xl shadow-gold/20 flex items-center justify-center gap-2 cursor-pointer border border-goldlight"
+              className="py-3.5 px-8 rounded-xl text-white font-extrabold text-xs shadow-lg shadow-rose-200 cursor-pointer flex items-center gap-2 border border-rose-200"
             >
-              <CheckCircle className="w-5 h-5 text-black" />
-              <span>{submitting ? "CREATING EXPERIENCE..." : "ACCEPT & CREATE EXPERIENCE"}</span>
+              {submitting ? "CREATING..." : "CREATE SISTER NOW 🎉"}
             </button>
           </div>
         </motion.div>
       )}
 
-      {/* STEP 4: Success & Share Code */}
-      {step === 4 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 text-center">
-          <div className="bg-[#14121B] border border-gold/40 rounded-3xl p-8 space-y-6 shadow-2xl">
-            <div className="p-4 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-400 w-16 h-16 mx-auto flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-emerald-400" />
-            </div>
+      {/* STEP 4: Success & Code Generated */}
+      {step === 4 && createdSister && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white border-2 border-rose-200 rounded-3xl p-8 text-center space-y-6 shadow-xl"
+        >
+          <div className="p-4 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] w-16 h-16 mx-auto flex items-center justify-center shadow-xs">
+            <CheckCircle className="w-8 h-8" />
+          </div>
 
-            <h2 className="font-serif text-3xl font-bold text-white">
-              Experience Created for {name}! ❤️
+          <div className="space-y-2">
+            <h2 className="font-serif text-3xl font-bold text-gray-900">
+              Experience Created for {createdSister.name}! 🎉
             </h2>
+            <p className="text-xs text-gray-600 font-semibold">
+              Give this mandatory 6-digit access code to {createdSister.name} so she can unlock her surprise.
+            </p>
+          </div>
 
-            <div className="p-6 rounded-2xl bg-black border-2 border-gold/50 space-y-3 shadow-inner">
-              <div className="text-xs uppercase text-gold font-bold tracking-widest">
-                SECRET ACCESS CODE
-              </div>
-              <div className="font-mono text-4xl sm:text-5xl font-bold text-white tracking-widest">
-                {generatedCode}
-              </div>
-              <p className="text-xs text-gray-300">
-                Share this code with {name}. Keep it private!
-              </p>
+          <div className="bg-rose-50 p-6 rounded-2xl border border-rose-200 space-y-2 shadow-inner">
+            <span className="text-xs uppercase font-extrabold text-[#E07A5F] tracking-widest">
+              HER SECRET ACCESS CODE:
+            </span>
+            <div className="font-mono text-4xl font-extrabold text-[#E07A5F] tracking-widest">
+              {generatedCode}
             </div>
+          </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `🎀 I made a special surprise for you for Raksha Bandhan!\nOpen: ${window.location.origin}/rakhi\nSecret Code: ${generatedCode}`
-                  );
-                  alert("Share message copied!");
-                }}
-                className="flex-1 py-3.5 rounded-xl bg-black border border-gold text-gold font-bold text-xs hover:bg-gold/20 cursor-pointer"
-              >
-                COPY SHARE MESSAGE
-              </button>
-
-              <button
-                onClick={() => router.push(`/rakhi/admin/sisters/${createdSister?.id}/questions`)}
-                style={{
-                  background: "linear-gradient(135deg, #D4AF37 0%, #F4E091 50%, #AA820A 100%)",
-                }}
-                className="flex-1 py-3.5 rounded-xl text-black font-extrabold text-xs shadow-md border border-goldlight cursor-pointer"
-              >
-                ADD QUESTIONS NOW →
-              </button>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <button
+              onClick={() => router.push(`/rakhi/admin/sisters/${createdSister.id}`)}
+              className="flex-1 py-3.5 rounded-xl bg-gray-100 text-gray-800 font-bold text-xs"
+            >
+              GO TO SISTER HUB
+            </button>
+            <button
+              onClick={() => router.push(`/rakhi/admin/sisters/${createdSister.id}/preview`)}
+              style={{
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+              }}
+              className="flex-1 py-3.5 rounded-xl text-white font-extrabold text-xs shadow-md border border-rose-200"
+            >
+              PREVIEW EXPERIENCE
+            </button>
           </div>
         </motion.div>
       )}
 
-      {/* AI Rephrase Modal */}
       <AIRephraseModal
         isOpen={rephraseModalOpen}
         sisterName={name || "Sister"}

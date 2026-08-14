@@ -12,30 +12,30 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 text-gray-900">
       <div>
-        <h1 className="font-serif text-3xl font-bold text-cream">System Settings</h1>
-        <p className="text-sm text-goldlight/70">
+        <h1 className="font-serif text-3xl font-bold text-gray-900">System Settings</h1>
+        <p className="text-sm text-gray-600 font-semibold">
           General preferences, security configuration, and Gemini AI key setup.
         </p>
       </div>
 
-      <div className="bg-[#16141D] border border-gold/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="bg-white border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
         <div className="space-y-4">
-          <h3 className="font-serif text-lg font-bold text-cream flex items-center gap-2">
-            <Wand2 className="w-5 h-5 text-gold" /> AI Personalization Settings
+          <h3 className="font-serif text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-[#E07A5F]" /> AI Personalization Settings
           </h3>
-          <div className="p-4 rounded-xl bg-[#0E0D12] border border-gold/20 text-xs text-goldlight/80 space-y-1">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-gray-800 font-bold space-y-1">
             <div>Model: Gemini 2.5 Flash</div>
             <div>Status: Configured in environment (.env)</div>
           </div>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-gold/10">
-          <h3 className="font-serif text-lg font-bold text-cream flex items-center gap-2">
-            <Shield className="w-5 h-5 text-gold" /> Security Settings
+        <div className="space-y-4 pt-4 border-t border-rose-200">
+          <h3 className="font-serif text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#E07A5F]" /> Security Settings
           </h3>
-          <div className="p-4 rounded-xl bg-[#0E0D12] border border-gold/20 text-xs text-goldlight/80 space-y-1">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-gray-800 font-bold space-y-1">
             <div>Admin PIN: 233014</div>
             <div>Access Code Format: 6-Digit Numeric</div>
             <div>Session Expiry: 7 Days</div>
@@ -44,7 +44,10 @@ export default function AdminSettingsPage() {
 
         <button
           onClick={handleSave}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-gold via-goldlight to-golddark text-charcoal font-bold text-xs shadow-md cursor-pointer"
+          style={{
+            background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+          }}
+          className="w-full py-4 rounded-xl text-white font-extrabold text-xs shadow-md cursor-pointer border border-rose-200"
         >
           {saved ? "SETTINGS SAVED!" : "SAVE PREFERENCES"}
         </button>

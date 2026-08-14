@@ -99,27 +99,30 @@ export default function SongLibraryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-gold">
-        <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center py-20 text-[#E07A5F]">
+        <div className="w-8 h-8 border-4 border-[#E07A5F] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto text-gray-900">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-cream">Song Library</h1>
-          <p className="text-sm text-goldlight/70">
-            Background audio tracks used during the sister experience and final letter reveal.
+          <h1 className="font-serif text-3xl font-bold text-gray-900">Song Library</h1>
+          <p className="text-sm text-gray-600 font-semibold">
+            Background BGM audio tracks used during the sister experience and final letter reveal.
           </p>
         </div>
 
         <button
           onClick={() => setShowAdd(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold via-goldlight to-golddark text-charcoal font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+          style={{
+            background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+          }}
+          className="px-4 py-2.5 rounded-xl text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-md border border-rose-200"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-white" />
           <span>ADD SONG</span>
         </button>
       </div>
@@ -127,13 +130,13 @@ export default function SongLibraryPage() {
       {showAdd && (
         <form
           onSubmit={handleAddSong}
-          className="bg-[#16141D] border border-gold/40 rounded-3xl p-6 space-y-4 shadow-2xl"
+          className="bg-white border-2 border-rose-200 rounded-3xl p-6 space-y-4 shadow-xl"
         >
-          <h3 className="font-serif text-lg font-bold text-cream">Add New Audio Track</h3>
+          <h3 className="font-serif text-lg font-bold text-gray-900">Add New Audio Track</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-goldlight/80 mb-1">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                 SONG TITLE *
               </label>
               <input
@@ -141,13 +144,13 @@ export default function SongLibraryPage() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Phoolon Ka Taron Ka"
-                className="w-full p-3.5 rounded-xl bg-[#0E0D12] border border-gold/30 text-cream text-xs"
+                placeholder="e.g. Phoolon Ka Taron Ka Flute BGM"
+                className="w-full p-3.5 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-bold text-xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-goldlight/80 mb-1">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                 ARTIST *
               </label>
               <input
@@ -155,90 +158,75 @@ export default function SongLibraryPage() {
                 required
                 value={artist}
                 onChange={(e) => setArtist(e.target.value)}
-                placeholder="e.g. Kishore Kumar / Acoustic Cover"
-                className="w-full p-3.5 rounded-xl bg-[#0E0D12] border border-gold/30 text-cream text-xs"
+                placeholder="e.g. Instrumental BGM"
+                className="w-full p-3.5 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-bold text-xs"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-goldlight/80 mb-1">MOOD</label>
-              <select
-                value={mood}
-                onChange={(e) => setMood(e.target.value)}
-                className="w-full p-3.5 rounded-xl bg-[#0E0D12] border border-gold/30 text-cream text-xs"
-              >
-                <option value="Emotional">Emotional</option>
-                <option value="Happy">Happy</option>
-                <option value="Nostalgic">Nostalgic</option>
-                <option value="Cinematic">Cinematic</option>
-                <option value="Celebration">Celebration</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-goldlight/80 mb-1">
-                AUDIO MP3 URL *
-              </label>
-              <input
-                type="text"
-                required
-                value={audioUrl}
-                onChange={(e) => setAudioUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full p-3.5 rounded-xl bg-[#0E0D12] border border-gold/30 text-cream text-xs"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              AUDIO URL (MP3) *
+            </label>
+            <input
+              type="url"
+              required
+              value={audioUrl}
+              onChange={(e) => setAudioUrl(e.target.value)}
+              placeholder="https://cdn.example.com/song.mp3"
+              className="w-full p-3.5 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-mono text-xs font-bold"
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setShowAdd(false)}
-              className="py-2.5 px-4 rounded-xl bg-white/5 text-cream text-xs font-semibold"
+              className="py-3 px-5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold"
             >
               CANCEL
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="py-2.5 px-5 rounded-xl bg-gold text-charcoal font-bold text-xs shadow-md"
+              style={{
+                background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+              }}
+              className="py-3 px-6 rounded-xl text-white font-extrabold text-xs shadow-md border border-rose-200"
             >
-              {submitting ? "SAVING..." : "SAVE SONG"}
+              {submitting ? "SAVING..." : "SAVE TRACK"}
             </button>
           </div>
         </form>
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {songs.map((song) => (
           <div
             key={song.id}
-            className="bg-[#16141D] border border-gold/20 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-gold/40 transition-all"
+            className="bg-white border-2 border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xs hover:border-[#E07A5F] transition-all"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => handleTogglePlay(song)}
-                className="w-12 h-12 rounded-full bg-gold/15 border border-gold/40 text-gold flex items-center justify-center hover:scale-105 transition-all shrink-0 cursor-pointer"
+                className="w-12 h-12 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] flex items-center justify-center shrink-0 hover:bg-rose-100 cursor-pointer shadow-xs"
               >
                 {playingId === song.id ? (
-                  <Pause className="w-5 h-5 fill-gold" />
+                  <Pause className="w-5 h-5 fill-[#E07A5F]" />
                 ) : (
-                  <Play className="w-5 h-5 ml-0.5 fill-gold" />
+                  <Play className="w-5 h-5 fill-[#E07A5F] ml-0.5" />
                 )}
               </button>
 
-              <div className="space-y-0.5">
-                <h3 className="font-serif text-base font-bold text-cream">{song.title}</h3>
-                <p className="text-xs text-goldlight/60">
-                  {song.artist} • <span className="text-gold">{song.mood}</span>
-                </p>
+              <div>
+                <h4 className="font-serif text-base font-bold text-gray-900">{song.title}</h4>
+                <p className="text-xs text-gray-600 font-semibold">{song.artist} • {song.mood}</p>
               </div>
             </div>
 
             <button
               onClick={() => handleDeleteSong(song.id)}
-              className="p-2 text-rose-400 hover:bg-rose-950/30 rounded-lg"
-              title="Delete Song"
+              className="p-2.5 rounded-xl text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>
