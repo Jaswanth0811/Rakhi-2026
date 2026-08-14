@@ -31,7 +31,7 @@ export default function SisterHubPage({ params }: { params: Promise<{ id: string
       }
     } catch (e) {
       console.error(e);
-    } font-serif;
+    }
     setLoading(false);
   };
 
