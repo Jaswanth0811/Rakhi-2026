@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Sparkles, CheckCircle, ArrowRight, Wand2, Palette, Music, Sliders, RefreshCw } from "lucide-react";
+import { User, Sparkles, CheckCircle, ArrowRight, Wand2, Calendar, RefreshCw } from "lucide-react";
 import AIRephraseModal from "@/components/admin/AIRephraseModal";
 
 export default function CreateSisterWizardPage() {
@@ -13,11 +13,20 @@ export default function CreateSisterWizardPage() {
   // Form State
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [birthDay, setBirthDay] = useState("28");
+  const [birthMonth, setBirthMonth] = useState("08");
   const [finalMessage, setFinalMessage] = useState("");
   const [themeId, setThemeId] = useState("warm_sunset");
   const [songId, setSongId] = useState("song_emotional_acoustic");
   const [motionStyle, setMotionStyle] = useState("slow_emotional");
-  const [customCode, setCustomCode] = useState("");
+  const [customCode, setCustomCode] = useState("2808");
+
+  // Auto update DDMM passcode when birthday changes
+  useEffect(() => {
+    const dayPadded = birthDay.padStart(2, "0");
+    const monthPadded = birthMonth.padStart(2, "0");
+    setCustomCode(`${dayPadded}${monthPadded}`);
+  }, [birthDay, birthMonth]);
 
   // DB Options
   const [themes, setThemes] = useState<any[]>([]);
@@ -132,7 +141,7 @@ export default function CreateSisterWizardPage() {
 
       setCreatedSister(data.sister);
       setGeneratedCode(data.generatedCode);
-      setStep(4); // Move to completion step
+      setStep(4);
     } catch {
       setError("Error creating sister.");
     } finally {
@@ -146,13 +155,13 @@ export default function CreateSisterWizardPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold text-gray-900">Create Sister Experience</h1>
         <p className="text-sm text-gray-600 font-semibold">
-          Follow the step-by-step wizard to build a personalized Rakhi surprise.
+          Build a personalized Rakhi surprise with DDMM birthday passcode.
         </p>
       </div>
 
       {/* Progress Steps */}
       <div className="flex items-center justify-between border-b border-rose-200 pb-4 text-xs font-bold text-gray-500">
-        <span className={step >= 1 ? "text-[#E07A5F]" : ""}>1. Basic Info</span>
+        <span className={step >= 1 ? "text-[#E07A5F]" : ""}>1. Basic Info & Birthday</span>
         <span>→</span>
         <span className={step >= 2 ? "text-[#E07A5F]" : ""}>2. Final Letter</span>
         <span>→</span>
@@ -167,14 +176,14 @@ export default function CreateSisterWizardPage() {
         </div>
       )}
 
-      {/* STEP 1: Basic Info */}
+      {/* STEP 1: Basic Info & Birthday */}
       {step === 1 && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border-2 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md"
         >
-          <h2 className="font-serif text-xl font-bold text-gray-900">Step 1: Sister Details</h2>
+          <h2 className="font-serif text-xl font-bold text-gray-900">Step 1: Sister Details & Birthday</h2>
 
           <div className="space-y-4">
             <div>
@@ -189,6 +198,67 @@ export default function CreateSisterWizardPage() {
                 placeholder="e.g. Anusha, Sravani, Priyanka..."
                 className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-bold focus:border-[#E07A5F] focus:outline-none"
               />
+            </div>
+
+            {/* Birthday DDMM Inputs */}
+            <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black text-[#E07A5F] uppercase tracking-wider">
+                <Calendar className="w-4 h-4 text-[#E07A5F]" />
+                Sister Birthday (For 4-Digit Passcode Generation)
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                    BIRTH DAY (DD)
+                  </label>
+                  <select
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-white border border-rose-200 font-mono font-bold text-gray-900 text-sm focus:outline-none"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0")).map((d) => (
+                      <option key={d} value={d}>
+                        Day {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                    BIRTH MONTH (MM)
+                  </label>
+                  <select
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-white border border-rose-200 font-mono font-bold text-gray-900 text-sm focus:outline-none"
+                  >
+                    {[
+                      { num: "01", name: "01 - January" },
+                      { num: "02", name: "02 - February" },
+                      { num: "03", name: "03 - March" },
+                      { num: "04", name: "04 - April" },
+                      { num: "05", name: "05 - May" },
+                      { num: "06", name: "06 - June" },
+                      { num: "07", name: "07 - July" },
+                      { num: "08", name: "08 - August" },
+                      { num: "09", name: "09 - September" },
+                      { num: "10", name: "10 - October" },
+                      { num: "11", name: "11 - November" },
+                      { num: "12", name: "12 - December" },
+                    ].map((m) => (
+                      <option key={m.num} value={m.num}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="text-xs font-bold text-gray-700 pt-1">
+                Generated Passcode (DDMM): <span className="font-mono font-extrabold text-[#E07A5F] text-sm px-2 py-0.5 rounded-lg bg-white border border-rose-300">{customCode}</span>
+              </div>
             </div>
 
             <div>
@@ -325,14 +395,14 @@ export default function CreateSisterWizardPage() {
           {/* Code Customization */}
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-              CUSTOM 6-DIGIT ACCESS CODE (OPTIONAL)
+              DDMM BIRTHDAY PASSCODE
             </label>
             <input
               type="text"
               maxLength={6}
               value={customCode}
               onChange={(e) => setCustomCode(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Auto-generated if left blank (e.g. 280826)"
+              placeholder="e.g. 2808 for 28th August"
               className="w-full p-4 rounded-xl bg-rose-50/50 border border-rose-200 text-gray-900 font-mono font-bold focus:border-[#E07A5F] focus:outline-none tracking-widest text-center text-lg"
             />
           </div>
@@ -374,13 +444,13 @@ export default function CreateSisterWizardPage() {
               Experience Created for {createdSister.name}! 🎉
             </h2>
             <p className="text-xs text-gray-600 font-semibold">
-              Give this mandatory 6-digit access code to {createdSister.name} so she can unlock her surprise.
+              Give this 4-digit DDMM birthday passcode to {createdSister.name} so she can unlock her surprise.
             </p>
           </div>
 
           <div className="bg-rose-50 p-6 rounded-2xl border border-rose-200 space-y-2 shadow-inner">
             <span className="text-xs uppercase font-extrabold text-[#E07A5F] tracking-widest">
-              HER SECRET ACCESS CODE:
+              HER SECRET DDMM PASSCODE:
             </span>
             <div className="font-mono text-4xl font-extrabold text-[#E07A5F] tracking-widest">
               {generatedCode}

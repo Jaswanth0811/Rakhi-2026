@@ -7,24 +7,35 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { code } = body;
 
-    if (!code || typeof code !== "string" || code.trim().length !== 6) {
+    const trimmedCode = code ? String(code).trim() : "";
+
+    if (!trimmedCode || trimmedCode.length < 4 || trimmedCode.length > 6) {
       return NextResponse.json(
-        { error: "Please enter a valid 6-digit secret code." },
+        { error: "Please enter your 4-digit DDMM birthday passcode." },
         { status: 400 }
       );
     }
 
-    const hashedInput = hashCode(code.trim());
+    const hashedInput = hashCode(trimmedCode);
 
-    // Find sister access record by codeHash
-    const access = await db.sisterAccess.findFirst({
+    // Find sister access record by codeHash (exact match)
+    let access = await db.sisterAccess.findFirst({
       where: { codeHash: hashedInput, isActive: true },
       include: { sister: true },
     });
 
+    // Backwards compatibility fallback for 4-digit DDMM code matching legacy 6-digit (e.g. "2808" -> "280826")
+    if (!access && trimmedCode.length === 4) {
+      const legacy6Hash = hashCode(`${trimmedCode}26`);
+      access = await db.sisterAccess.findFirst({
+        where: { codeHash: legacy6Hash, isActive: true },
+        include: { sister: true },
+      });
+    }
+
     if (!access || !access.sister || access.sister.status !== "published") {
       return NextResponse.json(
-        { error: "Hmm... That doesn't look like the secret code. Try again. ❤️" },
+        { error: "Hmm... That passcode doesn't match. Enter your Birthday in DDMM order (e.g. 2808). ❤️" },
         { status: 401 }
       );
     }
@@ -54,7 +65,6 @@ export async function POST(req: NextRequest) {
       sessionId: session.id,
     });
 
-    // In-memory session cookie (no persistent maxAge)
     response.cookies.set({
       name: "rakhi_sister_token",
       value: token,
