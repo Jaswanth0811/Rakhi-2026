@@ -28,7 +28,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
     { title: "The passcode is the DDMM of your Birthday! 🎂", subtitle: "Enter your birth date and month to reveal your gift." },
   ];
 
-  // Story beats cycler - advances through story beats and triggers video_completed when finished
+  // Story beats cycler
   useEffect(() => {
     if (stage !== "video_playing" || !isPlayingVideo) return;
 
@@ -37,22 +37,19 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
         if (prev < storyBeats.length - 1) {
           return prev + 1;
         } else {
-          // All story beats finished -> reveal Enter Code button stage
           clearInterval(interval);
           setStage("video_completed");
           return prev;
         }
       });
-    }, 4000);
+    }, 3800);
 
     return () => clearInterval(interval);
   }, [stage, isPlayingVideo]);
 
   useEffect(() => {
     if (stage === "keypad") {
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 100);
+      inputRefs.current[0]?.focus();
     }
   }, [stage]);
 
@@ -66,7 +63,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   };
 
   const submitCode = async (codeToSubmit: string) => {
-    if (codeToSubmit.length < 4) return;
+    if (codeToSubmit.length < 4 || isVerifying) return;
 
     setIsVerifying(true);
     setErrorMsg(null);
@@ -87,11 +84,10 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
         return;
       }
 
+      // Instantaneous < 1s unlock feedback
       sfx.playChime();
-      setTimeout(() => {
-        setIsVerifying(false);
-        onUnlockSuccess(data.sisterName);
-      }, 700);
+      setIsVerifying(false);
+      onUnlockSuccess(data.sisterName);
     } catch {
       setErrorMsg("Connection error. Please try again.");
       triggerShake();
@@ -164,23 +160,23 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full p-4 sm:p-6 z-10 text-gray-900">
+    <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full p-4 sm:p-6 z-10 text-gray-900 touch-manipulation">
       <AnimatePresence mode="wait">
-        {/* STAGE 1: CINEMATIC OPENING (VIDEO STORY PLAYS -> REVEALS ENTER CODE BUTTON UPON COMPLETION) */}
+        {/* STAGE 1: CINEMATIC OPENING */}
         {stage !== "keypad" ? (
           <motion.div
             key="cinematic-opening-container"
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -15 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-lg rounded-3xl bg-white/95 border-2 border-rose-200/90 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.15)] text-gray-900 relative overflow-hidden text-center backdrop-blur-2xl"
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="w-full max-w-lg rounded-3xl bg-white/95 border-2 border-rose-200/90 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.15)] text-gray-900 relative overflow-hidden text-center backdrop-blur-2xl will-change-transform"
           >
             {/* Play/Pause Controls */}
             <div className="flex justify-end">
               <button
                 onClick={() => setIsPlayingVideo(!isPlayingVideo)}
-                className="p-2 rounded-full bg-rose-50 border border-rose-200 text-gray-800 hover:bg-rose-100 transition-all cursor-pointer shadow-xs"
+                className="p-2 rounded-full bg-rose-50 border border-rose-200 text-gray-800 hover:bg-rose-100 transition-all cursor-pointer shadow-xs active:scale-95"
                 title={isPlayingVideo ? "Pause" : "Play"}
               >
                 {isPlayingVideo ? <Pause className="w-4 h-4 text-gray-800" /> : <Play className="w-4 h-4 text-gray-800" />}
@@ -192,7 +188,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full border-2 border-dashed border-rose-300"
+                className="absolute inset-0 rounded-full border-2 border-dashed border-rose-300 pointer-events-none"
               />
               <div className="p-4 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] shadow-md">
                 <Gift className="w-10 h-10 text-[#E07A5F] animate-bounce" />
@@ -209,10 +205,10 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={beatIndex}
-                    initial={{ opacity: 0, y: 15, scale: 0.96 }}
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -15, scale: 0.96 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    transition={{ duration: 0.3 }}
                     className="space-y-1.5"
                   >
                     <h2 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900 leading-relaxed drop-shadow-xs">
@@ -226,12 +222,12 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               </div>
             )}
 
-            {/* PHASE B: VIDEO COMPLETED -> REVEALS EMOTIONAL PAUSE & ENTER YOUR CODE BUTTON */}
+            {/* PHASE B: VIDEO COMPLETED -> REVEALS ENTER YOUR CODE BUTTON */}
             {stage === "video_completed" && (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.4 }}
                 className="space-y-4 min-h-[110px] flex flex-col items-center justify-center"
               >
                 <div className="space-y-1.5">
@@ -246,13 +242,13 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
 
                 {/* REVEALED ENTER YOUR CODE BUTTON */}
                 <motion.button
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={handleOpenKeypad}
                   style={{
                     background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
                   }}
-                  className="w-full py-4 rounded-2xl text-white font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-200 border border-rose-200 cursor-pointer"
+                  className="w-full py-4 rounded-2xl text-white font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-200 border border-rose-200 cursor-pointer active:scale-96"
                 >
                   <span>ENTER YOUR CODE 🔑</span>
                   <ArrowRight className="w-4 h-4 text-white" />
@@ -279,16 +275,16 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
           /* STAGE 2: DDMM BIRTHDAY PASSCODE KEYPAD */
           <motion.div
             key={`passcode-keypad-${shakeCount}`}
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{
               opacity: 1,
               scale: 1,
               y: 0,
-              x: shakeCount > 0 ? [-12, 12, -8, 8, -4, 4, 0] : 0,
+              x: shakeCount > 0 ? [-8, 8, -5, 5, 0] : 0,
             }}
-            exit={{ opacity: 0, scale: 0.95, y: -15 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/90 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center text-gray-900"
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/90 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center text-gray-900 will-change-transform"
           >
             {/* Replay Video Story Pill Button */}
             <div className="flex justify-between items-center mb-1">
@@ -297,7 +293,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                   setStage("video_playing");
                   setBeatIndex(0);
                 }}
-                className="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-rose-100 transition-all cursor-pointer shadow-xs"
+                className="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-rose-100 transition-all cursor-pointer shadow-xs active:scale-95"
               >
                 <RotateCcw className="w-3 h-3" /> Replay Video Story 🎬
               </button>
@@ -350,9 +346,9 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             <AnimatePresence>
               {errorMsg && (
                 <motion.div
-                  initial={{ opacity: 0, y: -5 }}
+                  initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
+                  exit={{ opacity: 0, y: -4 }}
                   className="flex items-center justify-center gap-1.5 text-xs text-rose-800 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl shadow-xs"
                 >
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
@@ -361,15 +357,14 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               )}
             </AnimatePresence>
 
-            {/* Keypad Buttons with Spring Physics */}
+            {/* Keypad Buttons with Instant Mobile Touch Response */}
             <div className="grid grid-cols-3 gap-2.5 pt-1">
               {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
                 <motion.button
                   key={num}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.93 }}
+                  whileTap={{ scale: 0.92 }}
                   onClick={() => handleKeypadPress(num)}
-                  className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-95 transition-all shadow-xs cursor-pointer"
+                  className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
                 >
                   {num}
                 </motion.button>
@@ -378,18 +373,16 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 <KeyRound className="w-5 h-5 text-[#E07A5F]/40" />
               </div>
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.93 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => handleKeypadPress("0")}
-                className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-95 transition-all shadow-xs cursor-pointer"
+                className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
               >
                 0
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.93 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={handleBackspace}
-                className="py-3 rounded-2xl bg-rose-100/80 border border-rose-300 text-gray-800 flex items-center justify-center hover:bg-rose-200 active:scale-95 transition-all shadow-xs cursor-pointer"
+                className="py-3 rounded-2xl bg-rose-100/80 border border-rose-300 text-gray-800 flex items-center justify-center hover:bg-rose-200 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
               >
                 <Delete className="w-5 h-5" />
               </motion.button>
