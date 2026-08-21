@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAdminSession, hashCode } from "@/lib/security";
 
-function generate6DigitCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 export async function POST(req: NextRequest) {
   try {
     const admin = await getAdminSession();
@@ -14,13 +10,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { sisterId } = body;
+    const { sisterId, customCode } = body;
 
     if (!sisterId) {
       return NextResponse.json({ error: "Sister ID is required." }, { status: 400 });
     }
 
-    const newCode = generate6DigitCode();
+    const newCode = customCode && (customCode.trim().length === 4 || customCode.trim().length === 6) ? customCode.trim() : "2808";
     const codeHash = hashCode(newCode);
 
     await db.sisterAccess.upsert({

@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sister name is required." }, { status: 400 });
     }
 
-    const secretCode = customCode && customCode.trim().length === 6 ? customCode.trim() : generateRandomCode();
+    const secretCode = customCode && (customCode.trim().length === 4 || customCode.trim().length === 6) ? customCode.trim() : "2808";
     const codeHash = hashCode(secretCode);
 
     const sister = await db.sister.create({
