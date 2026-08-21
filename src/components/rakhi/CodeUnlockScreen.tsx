@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
-import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, Calendar, Video, ArrowRight, RotateCcw, Heart } from "lucide-react";
+import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, Calendar, ArrowRight, RotateCcw, Heart } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface CodeUnlockScreenProps {
@@ -37,7 +37,6 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
         if (prev < storyBeats.length - 1) {
           return prev + 1;
         } else {
-          // Completed video beats -> transition to emotional pause
           clearInterval(interval);
           setTimeout(() => {
             setStage("emotional_pause");
@@ -179,7 +178,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full p-4 sm:p-6 z-10 text-gray-900">
       <AnimatePresence mode="wait">
-        {/* PHASE 1: CINEMATIC OPENING & VIDEO STORY BEATS */}
+        {/* STAGE 1: CINEMATIC OPENING & STORY BEATS (CRYSAL CLEAR BLACK TEXT ON LIGHT PEARL GLASS) */}
         {stage !== "keypad" ? (
           <motion.div
             key="cinematic-opening-container"
@@ -187,18 +186,16 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -15 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-lg rounded-3xl bg-gradient-to-br from-rose-950 via-rose-900 to-amber-950 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(159,18,57,0.35)] border-2 border-rose-300/40 text-white relative overflow-hidden text-center backdrop-blur-2xl"
+            className="w-full max-w-lg rounded-3xl bg-white/95 border-2 border-rose-200/90 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.15)] text-gray-900 relative overflow-hidden text-center backdrop-blur-2xl"
           >
-            {/* Top Video Reel Badge & Controls */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-full bg-rose-500/30 border border-rose-300/40 text-rose-100 flex items-center gap-1.5 shadow-xs">
-                <Video className="w-3.5 h-3.5 text-amber-300 animate-pulse" /> Motion Presentation
-              </span>
+            {/* Play/Pause Control Only (Motion Presentation Tag Removed) */}
+            <div className="flex justify-end">
               <button
                 onClick={() => setIsPlayingVideo(!isPlayingVideo)}
-                className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all cursor-pointer"
+                className="p-2 rounded-full bg-rose-50 border border-rose-200 text-gray-800 hover:bg-rose-100 transition-all cursor-pointer shadow-xs"
+                title={isPlayingVideo ? "Pause" : "Play"}
               >
-                {isPlayingVideo ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {isPlayingVideo ? <Pause className="w-4 h-4 text-gray-800" /> : <Play className="w-4 h-4 text-gray-800" />}
               </button>
             </div>
 
@@ -207,18 +204,18 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full border-2 border-dashed border-amber-300/40"
+                className="absolute inset-0 rounded-full border-2 border-dashed border-rose-300"
               />
-              <div className="p-4 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 text-rose-950 shadow-lg shadow-rose-900/50">
-                <Gift className="w-10 h-10 animate-bounce" />
+              <div className="p-4 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] shadow-md">
+                <Gift className="w-10 h-10 text-[#E07A5F] animate-bounce" />
               </div>
             </div>
 
-            {/* CINEMATIC STORY BEATS */}
+            {/* CINEMATIC STORY BEATS WITH BOLD BLACK TEXT */}
             {stage === "video_intro" && (
               <div className="space-y-3 min-h-[120px] flex flex-col items-center justify-center px-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-300 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> Story Beat {beatIndex + 1} of 3
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#E07A5F] flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" /> Special Video Message {beatIndex + 1} of 3
                 </span>
 
                 <AnimatePresence mode="wait">
@@ -230,10 +227,10 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                     className="space-y-2"
                   >
-                    <h2 className="font-serif text-xl sm:text-2xl font-extrabold text-rose-100 leading-relaxed drop-shadow-md">
+                    <h2 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900 leading-relaxed drop-shadow-xs">
                       &ldquo;{storyBeats[beatIndex].title}&rdquo;
                     </h2>
-                    <p className="text-xs text-rose-200/80 font-bold">
+                    <p className="text-xs text-gray-700 font-bold">
                       {storyBeats[beatIndex].subtitle}
                     </p>
                   </motion.div>
@@ -249,11 +246,11 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 transition={{ duration: 0.8 }}
                 className="min-h-[120px] flex flex-col items-center justify-center space-y-2"
               >
-                <Heart className="w-6 h-6 text-amber-300 fill-amber-300 animate-pulse" />
-                <h3 className="font-serif text-xl sm:text-2xl font-extrabold text-rose-100">
+                <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
+                <h3 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900">
                   There&apos;s something waiting for you...
                 </h3>
-                <p className="text-xs text-amber-200 font-bold italic">
+                <p className="text-xs text-[#E07A5F] font-extrabold italic">
                   Only you can unlock it. ❤️
                 </p>
               </motion.div>
@@ -268,10 +265,10 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 className="space-y-4 min-h-[120px] flex flex-col items-center justify-center"
               >
                 <div className="space-y-1">
-                  <h3 className="font-serif text-2xl font-extrabold text-rose-100">
+                  <h3 className="font-serif text-2xl font-extrabold text-gray-900">
                     Your Surprise Is Ready 🎁
                   </h3>
-                  <p className="text-xs text-amber-200/90 font-bold">
+                  <p className="text-xs text-gray-700 font-bold">
                     Enter your 4-digit DDMM birthday passcode to unlock.
                   </p>
                 </div>
@@ -281,12 +278,12 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                   whileTap={{ scale: 0.96 }}
                   onClick={handleOpenKeypad}
                   style={{
-                    background: "linear-gradient(135deg, #F59E0B 0%, #F4ACB7 50%, #E07A5F 100%)",
+                    background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
                   }}
-                  className="w-full py-4 rounded-2xl text-gray-950 font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-rose-950/60 border border-amber-200 cursor-pointer"
+                  className="w-full py-4 rounded-2xl text-white font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-200 border border-rose-200 cursor-pointer"
                 >
                   <span>ENTER YOUR CODE 🔑</span>
-                  <ArrowRight className="w-4 h-4 text-gray-950" />
+                  <ArrowRight className="w-4 h-4 text-white" />
                 </motion.button>
               </motion.div>
             )}
@@ -298,7 +295,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                   <span
                     key={i}
                     className={`h-2 rounded-full transition-all ${
-                      i === beatIndex ? "bg-amber-300 w-8" : "bg-white/30 w-2"
+                      i === beatIndex ? "bg-[#E07A5F] w-8" : "bg-rose-200 w-2"
                     }`}
                   />
                 ))}
@@ -306,14 +303,14 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             )}
           </motion.div>
         ) : (
-          /* PHASE 2: DDMM BIRTHDAY PASSCODE KEYPAD */
+          /* STAGE 2: DDMM BIRTHDAY PASSCODE KEYPAD */
           <motion.div
             key="passcode-keypad"
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={shakeControls}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/80 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center"
+            className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/90 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center text-gray-900"
           >
             {/* Replay Motion Header Pill */}
             <div className="flex justify-between items-center mb-1">
@@ -324,7 +321,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 }}
                 className="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-rose-100 transition-all cursor-pointer shadow-xs"
               >
-                <RotateCcw className="w-3 h-3" /> Replay Motion Story 🎬
+                <RotateCcw className="w-3 h-3" /> Replay Video Story 🎬
               </button>
 
               <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-[#E07A5F] shadow-xs">
@@ -337,7 +334,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               <h1 className="font-serif text-xl sm:text-2xl font-bold text-gray-900">
                 Enter 4-Digit Birthday Code
               </h1>
-              <p className="text-xs text-gray-600 font-bold">
+              <p className="text-xs text-gray-700 font-bold">
                 Enter your birthday date & month in <span className="text-[#E07A5F]">DDMM</span> order (e.g. 2808 for 28th Aug)
               </p>
             </div>
