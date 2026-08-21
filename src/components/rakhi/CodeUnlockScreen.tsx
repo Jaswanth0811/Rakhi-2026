@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
-import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, Calendar, ArrowRight, RotateCcw, Heart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, ArrowRight, RotateCcw, Heart } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface CodeUnlockScreenProps {
   onUnlockSuccess: (sisterName: string) => void;
 }
 
-type Stage = "video_intro" | "emotional_pause" | "code_invitation" | "keypad";
+type Stage = "video_intro" | "keypad";
 
 export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenProps) {
   const [stage, setStage] = useState<Stage>("video_intro");
@@ -18,8 +18,8 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPlayingVideo, setIsPlayingVideo] = useState(true);
   const [beatIndex, setBeatIndex] = useState(0);
+  const [shakeCount, setShakeCount] = useState(0);
   
-  const shakeControls = useAnimationControls();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const storyBeats = [
@@ -33,43 +33,22 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
     if (stage !== "video_intro" || !isPlayingVideo) return;
 
     const interval = setInterval(() => {
-      setBeatIndex((prev) => {
-        if (prev < storyBeats.length - 1) {
-          return prev + 1;
-        } else {
-          clearInterval(interval);
-          setTimeout(() => {
-            setStage("emotional_pause");
-          }, 1200);
-          return prev;
-        }
-      });
-    }, 4000);
+      setBeatIndex((prev) => (prev + 1) % storyBeats.length);
+    }, 3800);
 
     return () => clearInterval(interval);
   }, [stage, isPlayingVideo]);
 
-  // Transition from emotional pause to code invitation
-  useEffect(() => {
-    if (stage === "emotional_pause") {
-      const timer = setTimeout(() => {
-        setStage("code_invitation");
-      }, 2200);
-      return () => clearTimeout(timer);
-    }
-  }, [stage]);
-
   useEffect(() => {
     if (stage === "keypad") {
-      inputRefs.current[0]?.focus();
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
     }
   }, [stage]);
 
-  const triggerShake = async () => {
-    await shakeControls.start({
-      x: [-12, 12, -8, 8, -4, 4, 0],
-      transition: { duration: 0.5, ease: "easeInOut" },
-    });
+  const triggerShake = () => {
+    setShakeCount((prev) => prev + 1);
   };
 
   const handleOpenKeypad = () => {
@@ -178,17 +157,17 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full p-4 sm:p-6 z-10 text-gray-900">
       <AnimatePresence mode="wait">
-        {/* STAGE 1: CINEMATIC OPENING & STORY BEATS (CRYSAL CLEAR BLACK TEXT ON LIGHT PEARL GLASS) */}
-        {stage !== "keypad" ? (
+        {/* STAGE 1: CINEMATIC VIDEO INTRO CARD */}
+        {stage === "video_intro" ? (
           <motion.div
             key="cinematic-opening-container"
             initial={{ opacity: 0, scale: 0.94, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -15 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-lg rounded-3xl bg-white/95 border-2 border-rose-200/90 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.15)] text-gray-900 relative overflow-hidden text-center backdrop-blur-2xl"
           >
-            {/* Play/Pause Control Only (Motion Presentation Tag Removed) */}
+            {/* Play/Pause Controls */}
             <div className="flex justify-end">
               <button
                 onClick={() => setIsPlayingVideo(!isPlayingVideo)}
@@ -200,7 +179,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             </div>
 
             {/* Glowing 3D Gift Center Emblem */}
-            <div className="relative w-20 h-20 mx-auto flex items-center justify-center my-2">
+            <div className="relative w-20 h-20 mx-auto flex items-center justify-center my-1">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -212,107 +191,75 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             </div>
 
             {/* CINEMATIC STORY BEATS WITH BOLD BLACK TEXT */}
-            {stage === "video_intro" && (
-              <div className="space-y-3 min-h-[120px] flex flex-col items-center justify-center px-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#E07A5F] flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" /> Special Video Message {beatIndex + 1} of 3
-                </span>
+            <div className="space-y-3 min-h-[110px] flex flex-col items-center justify-center px-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#E07A5F] flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" /> Special Video Message {beatIndex + 1} of 3
+              </span>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={beatIndex}
-                    initial={{ opacity: 0, y: 15, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -15, scale: 0.96 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="space-y-2"
-                  >
-                    <h2 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900 leading-relaxed drop-shadow-xs">
-                      &ldquo;{storyBeats[beatIndex].title}&rdquo;
-                    </h2>
-                    <p className="text-xs text-gray-700 font-bold">
-                      {storyBeats[beatIndex].subtitle}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            )}
-
-            {/* STAGE: EMOTIONAL PAUSE */}
-            {stage === "emotional_pause" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-                className="min-h-[120px] flex flex-col items-center justify-center space-y-2"
-              >
-                <Heart className="w-6 h-6 text-rose-500 fill-rose-500 animate-pulse" />
-                <h3 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900">
-                  There&apos;s something waiting for you...
-                </h3>
-                <p className="text-xs text-[#E07A5F] font-extrabold italic">
-                  Only you can unlock it. ❤️
-                </p>
-              </motion.div>
-            )}
-
-            {/* STAGE: CODE INVITATION */}
-            {stage === "code_invitation" && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="space-y-4 min-h-[120px] flex flex-col items-center justify-center"
-              >
-                <div className="space-y-1">
-                  <h3 className="font-serif text-2xl font-extrabold text-gray-900">
-                    Your Surprise Is Ready 🎁
-                  </h3>
-                  <p className="text-xs text-gray-700 font-bold">
-                    Enter your 4-digit DDMM birthday passcode to unlock.
-                  </p>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={handleOpenKeypad}
-                  style={{
-                    background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
-                  }}
-                  className="w-full py-4 rounded-2xl text-white font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-200 border border-rose-200 cursor-pointer"
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={beatIndex}
+                  initial={{ opacity: 0, y: 15, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -15, scale: 0.96 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className="space-y-1.5"
                 >
-                  <span>ENTER YOUR CODE 🔑</span>
-                  <ArrowRight className="w-4 h-4 text-white" />
-                </motion.button>
-              </motion.div>
-            )}
+                  <h2 className="font-serif text-xl sm:text-2xl font-extrabold text-gray-900 leading-relaxed drop-shadow-xs">
+                    &ldquo;{storyBeats[beatIndex].title}&rdquo;
+                  </h2>
+                  <p className="text-xs text-gray-700 font-bold">
+                    {storyBeats[beatIndex].subtitle}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-            {/* Progress Dots */}
-            {stage === "video_intro" && (
-              <div className="flex justify-center items-center gap-2 pt-1">
-                {storyBeats.map((_, i) => (
-                  <span
-                    key={i}
-                    className={`h-2 rounded-full transition-all ${
-                      i === beatIndex ? "bg-[#E07A5F] w-8" : "bg-rose-200 w-2"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+            {/* Reel Progress Dots */}
+            <div className="flex justify-center items-center gap-2">
+              {storyBeats.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setBeatIndex(i)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    i === beatIndex ? "bg-[#E07A5F] w-8" : "bg-rose-200 w-2 hover:bg-rose-300"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* PROMINENT ALWAYS-VISIBLE 'ENTER YOUR CODE' BUTTON */}
+            <div className="pt-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={handleOpenKeypad}
+                style={{
+                  background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+                }}
+                className="w-full py-4 rounded-2xl text-white font-serif font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-200 border border-rose-200 cursor-pointer"
+              >
+                <span>ENTER YOUR CODE 🔑</span>
+                <ArrowRight className="w-4 h-4 text-white" />
+              </motion.button>
+            </div>
           </motion.div>
         ) : (
-          /* STAGE 2: DDMM BIRTHDAY PASSCODE KEYPAD */
+          /* STAGE 2: DDMM BIRTHDAY PASSCODE KEYPAD (VISIBLE AT OPACITY 1 IMMEDIATELY) */
           <motion.div
-            key="passcode-keypad"
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={shakeControls}
-            exit={{ opacity: 0, scale: 0.95 }}
+            key={`passcode-keypad-${shakeCount}`}
+            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              x: shakeCount > 0 ? [-12, 12, -8, 8, -4, 4, 0] : 0,
+            }}
+            exit={{ opacity: 0, scale: 0.95, y: -15 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/90 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center text-gray-900"
           >
-            {/* Replay Motion Header Pill */}
+            {/* Replay Video Story Pill Button */}
             <div className="flex justify-between items-center mb-1">
               <button
                 onClick={() => {
