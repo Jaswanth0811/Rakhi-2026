@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import CodeUnlockScreen from "@/components/rakhi/CodeUnlockScreen";
 import CinematicUnlock from "@/components/rakhi/CinematicUnlock";
 import PersonalIntro from "@/components/rakhi/PersonalIntro";
@@ -117,76 +118,127 @@ export default function RakhiPublicPage() {
 
       {/* Mobile-First Reel Vertical Snapping Container */}
       <div className="h-[100dvh] w-full overflow-y-auto snap-y snap-mandatory scroll-smooth custom-scrollbar">
-        {step === "CODE_UNLOCK" && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <CodeUnlockScreen onUnlockSuccess={handleUnlockSuccess} />
-          </section>
-        )}
+        <AnimatePresence mode="wait">
+          {step === "CODE_UNLOCK" && (
+            <motion.section
+              key="code-unlock-step"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <CodeUnlockScreen onUnlockSuccess={handleUnlockSuccess} />
+            </motion.section>
+          )}
 
-        {step === "CINEMATIC_UNLOCK" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <CinematicUnlock
-              sisterName={data.sister.name}
-              onNext={() => setStep("PERSONAL_INTRO")}
-            />
-          </section>
-        )}
+          {step === "CINEMATIC_UNLOCK" && data && (
+            <motion.section
+              key="cinematic-unlock-step"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <CinematicUnlock
+                sisterName={data.sister.name}
+                onNext={() => setStep("PERSONAL_INTRO")}
+              />
+            </motion.section>
+          )}
 
-        {step === "PERSONAL_INTRO" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <PersonalIntro
-              sisterName={data.sister.name}
-              photoUrl={data.sister.photoUrl}
-              onNext={() => {
-                if (!data.questions || data.questions.length === 0) {
-                  setStep("FINAL_LETTER");
-                } else {
-                  setStep("QUESTIONS");
-                }
-              }}
-            />
-          </section>
-        )}
+          {step === "PERSONAL_INTRO" && data && (
+            <motion.section
+              key="personal-intro-step"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <PersonalIntro
+                sisterName={data.sister.name}
+                photoUrl={data.sister.photoUrl}
+                onNext={() => {
+                  if (!data.questions || data.questions.length === 0) {
+                    setStep("FINAL_LETTER");
+                  } else {
+                    setStep("QUESTIONS");
+                  }
+                }}
+              />
+            </motion.section>
+          )}
 
-        {step === "QUESTIONS" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <QuestionContainer
-              questions={data.questions}
-              memories={data.memories}
-              onCompleteAll={handleCompleteAllQuestions}
-            />
-          </section>
-        )}
+          {step === "QUESTIONS" && data && (
+            <motion.section
+              key="questions-step"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <QuestionContainer
+                questions={data.questions}
+                memories={data.memories}
+                onCompleteAll={handleCompleteAllQuestions}
+              />
+            </motion.section>
+          )}
 
-        {step === "FINAL_LETTER" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <FinalLetter
-              sisterName={data.sister.name}
-              photoUrl={data.sister.photoUrl}
-              finalMessage={data.sister.finalMessage}
-              onNext={() => setStep("RAKHI_REVEAL")}
-            />
-          </section>
-        )}
+          {step === "FINAL_LETTER" && data && (
+            <motion.section
+              key="final-letter-step"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <FinalLetter
+                sisterName={data.sister.name}
+                photoUrl={data.sister.photoUrl}
+                finalMessage={data.sister.finalMessage}
+                onNext={() => setStep("RAKHI_REVEAL")}
+              />
+            </motion.section>
+          )}
 
-        {step === "RAKHI_REVEAL" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <RakhiCanvasReveal
-              sisterName={data.sister.name}
-              onNext={() => setStep("CLOSING")}
-            />
-          </section>
-        )}
+          {step === "RAKHI_REVEAL" && data && (
+            <motion.section
+              key="rakhi-reveal-step"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <RakhiCanvasReveal
+                sisterName={data.sister.name}
+                onNext={() => setStep("CLOSING")}
+              />
+            </motion.section>
+          )}
 
-        {step === "CLOSING" && data && (
-          <section className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative">
-            <ClosingScreen
-              sisterName={data.sister.name}
-              onReplay={() => setStep("CINEMATIC_UNLOCK")}
-              onViewLetter={() => setStep("FINAL_LETTER")}
-            />
-          </section>
-        )}
+          {step === "CLOSING" && data && (
+            <motion.section
+              key="closing-step"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative"
+            >
+              <ClosingScreen
+                sisterName={data.sister.name}
+                onReplay={() => setStep("CINEMATIC_UNLOCK")}
+                onViewLetter={() => setStep("FINAL_LETTER")}
+              />
+            </motion.section>
+          )}
+        </AnimatePresence>
       </div>
     </main>
   );
