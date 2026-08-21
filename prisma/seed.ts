@@ -5,7 +5,7 @@ import { DEFAULT_THEMES, DEFAULT_SONGS } from "../src/lib/seed-data";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding Rakhi 2026 database...");
+  console.log("🌱 Seeding Rakhi 2026 database with 4-digit DDMM birthday passcodes...");
 
   // 1. Seed Themes
   for (const theme of DEFAULT_THEMES) {
@@ -72,8 +72,8 @@ async function main() {
   });
   console.log("✅ Admin user seeded.");
 
-  // 4. Seed Sister 1: Anusha (Code: 280826)
-  const anushaCode = "280826";
+  // 4. Seed Sister 1: Anusha (4-Digit DDMM Passcode: 2808)
+  const anushaCode = "2808";
   const anushaCodeHash = hashCode(anushaCode);
 
   const existingAnusha = await prisma.sister.findFirst({
@@ -104,7 +104,7 @@ async function main() {
     },
   });
 
-  // Anusha's Memories
+  // Anusha's Memories & Questions
   const memory1 = await prisma.memory.create({
     data: {
       sisterId: anusha.id,
@@ -121,7 +121,6 @@ async function main() {
     },
   });
 
-  // Anusha's Questions
   const q1 = await prisma.question.create({
     data: {
       sisterId: anusha.id,
@@ -136,31 +135,25 @@ async function main() {
     data: [
       {
         questionId: q1.id,
-        label: "Me 😎",
-        value: "Me 😎",
-        responseMessage: "Honesty is appreciated! 😂 You definitely have your moments!",
+        label: "Definitely You! 😜",
+        value: "you",
+        responseMessage: "Hey! I am 100% innocent! 😇",
         animationType: "funny_shake",
       },
       {
         questionId: q1.id,
-        label: "You 😂",
-        value: "You 😂",
-        responseMessage: "I knew you'd say that! But admit it, life would be boring without me! 😜",
-        animationType: "funny_shake",
-      },
-      {
-        questionId: q1.id,
-        label: "Both of us 🤝",
-        value: "Both 🤝",
-        responseMessage: "100% accurate! Equal partners in crime! 🤝",
+        label: "Me, but I'll never admit it 🤫",
+        value: "me",
+        responseMessage: "Aha! Truth finally revealed! 🎉",
         animationType: "celebration",
+        memoryId: memory1.id,
       },
       {
         questionId: q1.id,
-        label: "Neither, we are angels 😇",
-        value: "Neither 😇",
-        responseMessage: "Who are we kidding here? 😇 Lie detector activated!",
-        animationType: "playful",
+        label: "50-50 Equal Partners in Crime 🤝",
+        value: "both",
+        responseMessage: "Best crime partners forever! 💥",
+        animationType: "happy",
       },
     ],
   });
@@ -168,7 +161,7 @@ async function main() {
   const q2 = await prisma.question.create({
     data: {
       sisterId: anusha.id,
-      question: "How much do you miss our childhood fighting & banter? 😇",
+      question: "Rate our sibling bond strength from 1 to 10 ⭐",
       type: "rating",
       displayOrder: 2,
       animationType: "typewriter",
@@ -178,18 +171,17 @@ async function main() {
   await prisma.answerOption.create({
     data: {
       questionId: q2.id,
-      label: "Rating 1-10",
+      label: "Rating Scale",
       value: "rating_scale",
-      responseMessage: "Those childhood fights built our unbreakable bond! ❤️",
+      responseMessage: "Unbreakable bond forever & always! ❤️",
       animationType: "emotional",
-      memoryId: memory1.id,
     },
   });
 
   const q3 = await prisma.question.create({
     data: {
       sisterId: anusha.id,
-      question: "Describe our sibling bond in one emoji! ✨",
+      question: "Pick the emoji that represents us best!",
       type: "emoji",
       displayOrder: 3,
       animationType: "typewriter",
@@ -211,20 +203,6 @@ async function main() {
         value: "😂",
         responseMessage: "Laughter is our official sibling language! 😂",
         animationType: "happy",
-      },
-      {
-        questionId: q3.id,
-        label: "🥹 Cherished Bond",
-        value: "🥹",
-        responseMessage: "Always here for you, no matter what! 🥹",
-        animationType: "emotional",
-      },
-      {
-        questionId: q3.id,
-        label: "😤 Drama & Chaos",
-        value: "😤",
-        responseMessage: "The good kind of drama that keeps us close! 😤",
-        animationType: "playful",
       },
     ],
   });
@@ -250,10 +228,10 @@ async function main() {
     },
   });
 
-  console.log(`✅ Sister Anusha seeded with Code: ${anushaCode}`);
+  console.log(`✅ Sister Anusha seeded with DDMM Code: ${anushaCode}`);
 
-  // 5. Seed Sister 2: Sravani (Code: 739421)
-  const sravaniCode = "739421";
+  // 5. Seed Sister 2: Sravani (4-Digit DDMM Passcode: 0703)
+  const sravaniCode = "0703";
   const sravaniCodeHash = hashCode(sravaniCode);
 
   const existingSravani = await prisma.sister.findFirst({
@@ -322,27 +300,41 @@ async function main() {
     ],
   });
 
-  const sq2 = await prisma.question.create({
+  console.log(`✅ Sister Sravani seeded with DDMM Code: ${sravaniCode}`);
+
+  // 6. Seed Sister 3: Sirisha (4-Digit DDMM Passcode: 2310)
+  const sirishaCode = "2310";
+  const sirishaCodeHash = hashCode(sirishaCode);
+
+  const existingSirisha = await prisma.sister.findFirst({
+    where: { name: "Sirisha" },
+  });
+
+  if (existingSirisha) {
+    await prisma.sister.delete({ where: { id: existingSirisha.id } });
+  }
+
+  const sirisha = await prisma.sister.create({
     data: {
-      sisterId: sravani.id,
-      question: "On a scale of 1 to 10, how awesome is your brother? 😎",
-      type: "rating",
-      displayOrder: 2,
-      animationType: "typewriter",
+      name: "Sirisha",
+      photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80",
+      finalMessage:
+        "Dearest Sirisha,\n\nYou bring so much laughter, love, and light into my life.\n\nOn this special day of Raksha Bandhan, I want you to know how truly special you are to me.\n\nI promise to always protect you, support your dreams, and be there whenever you need me.\n\nHappy Raksha Bandhan! ❤️\n\n— Your Brother",
+      themeId: "warm_sunset",
+      songId: "song_emotional_acoustic",
+      motionStyle: "cinematic",
+      status: "published",
+      publishedAt: new Date(),
+      access: {
+        create: {
+          codeHash: sirishaCodeHash,
+          isActive: true,
+        },
+      },
     },
   });
 
-  await prisma.answerOption.create({
-    data: {
-      questionId: sq2.id,
-      label: "Rating Scale",
-      value: "rating_scale",
-      responseMessage: "Anything below 10 is clearly a system glitch! 😂 You are awesome too!",
-      animationType: "happy",
-    },
-  });
-
-  console.log(`✅ Sister Sravani seeded with Code: ${sravaniCode}`);
+  console.log(`✅ Sister Sirisha seeded with DDMM Code: ${sirishaCode}`);
   console.log("🎉 Database seeding complete!");
 }
 
