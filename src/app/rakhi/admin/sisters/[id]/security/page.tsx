@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, KeyRound, RefreshCw, Copy, Check, Calendar } from "lucide-react";
+import { ArrowLeft, KeyRound, RefreshCw, Copy, Check, Calendar, Save } from "lucide-react";
 
 export default function SisterSecurityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -23,10 +23,13 @@ export default function SisterSecurityPage({ params }: { params: Promise<{ id: s
       if (res.ok) {
         const json = await res.json();
         setSister(json.sister);
-        if (json.sister?.customAccessCode && json.sister.customAccessCode.length === 4) {
-          setRevealedCode(json.sister.customAccessCode);
-          setBirthDay(json.sister.customAccessCode.slice(0, 2));
-          setBirthMonth(json.sister.customAccessCode.slice(2, 4));
+        if (json.sister?.access?.codeHash) {
+          const rawCode = String(json.sister.access.codeHash).trim();
+          setRevealedCode(rawCode);
+          if (rawCode.length === 4) {
+            setBirthDay(rawCode.slice(0, 2));
+            setBirthMonth(rawCode.slice(2, 4));
+          }
         }
       }
     } catch (e) {
@@ -44,12 +47,16 @@ export default function SisterSecurityPage({ params }: { params: Promise<{ id: s
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customAccessCode: computedCode }),
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         setRevealedCode(computedCode);
-        alert(`Passcode updated to ${computedCode} (DDMM) successfully!`);
+        alert(`Passcode successfully saved to database as ${computedCode}! 🎉`);
+      } else {
+        alert(data.error || "Failed to update passcode in database.");
       }
     } catch (e) {
       console.error(e);
+      alert("Network error. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -97,18 +104,19 @@ export default function SisterSecurityPage({ params }: { params: Promise<{ id: s
           </p>
         </div>
 
-        {/* DDMM Birthday Selector Form */}
-        <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-3 text-left">
-          <label className="block text-xs font-black uppercase text-gray-700 tracking-wider">
+        {/* DDMM Birthday Selector Form & Save Button */}
+        <div className="p-5 rounded-2xl bg-rose-50/70 border-2 border-rose-200/90 space-y-4 text-left shadow-xs">
+          <label className="block text-xs font-black uppercase text-gray-800 tracking-wider">
             UPDATE BIRTHDAY DATE & MONTH (DDMM)
           </label>
+          
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="text-[10px] font-bold text-gray-600 uppercase">Birth Day (DD)</span>
+              <span className="text-[11px] font-extrabold text-gray-700 uppercase">Birth Day (DD)</span>
               <select
                 value={birthDay}
                 onChange={(e) => setBirthDay(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-white border border-rose-200 text-gray-900 font-mono font-bold text-sm"
+                className="w-full p-3 rounded-xl bg-white border border-rose-300 text-gray-900 font-mono font-bold text-sm shadow-xs focus:outline-none focus:border-[#E07A5F]"
               >
                 {Array.from({ length: 31 }, (_, i) => {
                   const val = String(i + 1).padStart(2, "0");
@@ -121,11 +129,11 @@ export default function SisterSecurityPage({ params }: { params: Promise<{ id: s
               </select>
             </div>
             <div>
-              <span className="text-[10px] font-bold text-gray-600 uppercase">Birth Month (MM)</span>
+              <span className="text-[11px] font-extrabold text-gray-700 uppercase">Birth Month (MM)</span>
               <select
                 value={birthMonth}
                 onChange={(e) => setBirthMonth(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-white border border-rose-200 text-gray-900 font-mono font-bold text-sm"
+                className="w-full p-3 rounded-xl bg-white border border-rose-300 text-gray-900 font-mono font-bold text-sm shadow-xs focus:outline-none focus:border-[#E07A5F]"
               >
                 {[
                   "01 (Jan)",
@@ -152,13 +160,27 @@ export default function SisterSecurityPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
+          {/* HIGH CONTRAST PROMINENT SAVE PASSCODE BUTTON */}
           <button
+            type="button"
             onClick={handleUpdateDDMMCode}
             disabled={updating}
-            className="w-full py-3.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border border-rose-400"
+            style={{
+              background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+            }}
+            className="w-full py-4 rounded-xl text-white font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer border border-rose-200 hover:opacity-95 transition-all mt-2"
           >
-            <RefreshCw className={`w-4 h-4 text-white ${updating ? "animate-spin" : ""}`} />
-            <span>{updating ? "SAVING..." : `SET PASSCODE TO ${computedCode} (DDMM)`}</span>
+            {updating ? (
+              <>
+                <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                <span>SAVING TO DATABASE...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5 text-white" />
+                <span>SAVE PASSCODE {computedCode} TO DATABASE</span>
+              </>
+            )}
           </button>
         </div>
 

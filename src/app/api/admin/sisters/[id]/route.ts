@@ -60,7 +60,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json();
-    const { name, photoUrl, finalMessage, themeId, songId, motionStyle, status } = body;
+    const { name, photoUrl, finalMessage, themeId, songId, motionStyle, status, customAccessCode } = body;
 
     const updated = await db.sister.update({
       where: { id },
@@ -82,7 +82,30 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, sister: updated });
+    // Directly update SisterAccess codeHash with plain text DDMM passcode (no hashing)
+    if (customAccessCode && typeof customAccessCode === "string") {
+      const cleanCode = customAccessCode.trim();
+      await db.sisterAccess.upsert({
+        where: { sisterId: id },
+        update: {
+          codeHash: cleanCode,
+          isActive: true,
+          failedAttempts: 0,
+        },
+        create: {
+          sisterId: id,
+          codeHash: cleanCode,
+          isActive: true,
+        },
+      });
+    }
+
+    const reFetched = await db.sister.findUnique({
+      where: { id },
+      include: { access: true },
+    });
+
+    return NextResponse.json({ success: true, sister: reFetched });
   } catch (error) {
     console.error("Admin PUT sister error:", error);
     return NextResponse.json({ error: "Failed to update sister." }, { status: 500 });
@@ -100,12 +123,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    await db.sister.delete({ where: { id } });
 
-    await db.sister.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true, message: "Sister deleted." });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Admin DELETE sister error:", error);
     return NextResponse.json({ error: "Failed to delete sister." }, { status: 500 });

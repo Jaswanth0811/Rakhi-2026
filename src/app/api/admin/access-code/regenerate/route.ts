@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getAdminSession, hashCode } from "@/lib/security";
+import { getAdminSession } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,19 +16,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sister ID is required." }, { status: 400 });
     }
 
-    const newCode = customCode && (customCode.trim().length === 4 || customCode.trim().length === 6) ? customCode.trim() : "2808";
-    const codeHash = hashCode(newCode);
+    const newCode = customCode && customCode.trim().length >= 4 ? customCode.trim() : "2808";
 
     await db.sisterAccess.upsert({
       where: { sisterId },
       update: {
-        codeHash,
+        codeHash: newCode, // Plain text DDMM passcode
         failedAttempts: 0,
         isActive: true,
       },
       create: {
         sisterId,
-        codeHash,
+        codeHash: newCode,
         isActive: true,
       },
     });
@@ -39,6 +38,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Regenerate Code API Error:", error);
-    return NextResponse.json({ error: "Failed to regenerate code." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update access code." }, { status: 500 });
   }
 }

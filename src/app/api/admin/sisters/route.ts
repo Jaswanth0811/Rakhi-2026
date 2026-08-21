@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getAdminSession, hashCode } from "@/lib/security";
-
-function generateRandomCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import { getAdminSession } from "@/lib/security";
 
 export async function GET() {
   try {
@@ -17,7 +13,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         access: {
-          select: { isActive: true, lastUsedAt: true, failedAttempts: true },
+          select: { codeHash: true, isActive: true, lastUsedAt: true, failedAttempts: true },
         },
         questions: { select: { id: true } },
         responses: { select: { id: true } },
@@ -41,6 +37,7 @@ export async function GET() {
       responseCount: sister.responses.length,
       completedCount: sister.sessions.filter((s) => s.completedAt !== null).length,
       accessActive: sister.access?.isActive ?? false,
+      customAccessCode: sister.access?.codeHash ?? null,
       lastAccessAt: sister.access?.lastUsedAt ?? null,
     }));
 
@@ -65,8 +62,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Sister name is required." }, { status: 400 });
     }
 
-    const secretCode = customCode && (customCode.trim().length === 4 || customCode.trim().length === 6) ? customCode.trim() : "2808";
-    const codeHash = hashCode(secretCode);
+    // Direct plain text 4-digit DDMM passcode (no hashing)
+    const secretCode = customCode && customCode.trim().length >= 4 ? customCode.trim() : "2808";
 
     const sister = await db.sister.create({
       data: {
@@ -80,7 +77,7 @@ export async function POST(req: NextRequest) {
         publishedAt: new Date(),
         access: {
           create: {
-            codeHash,
+            codeHash: secretCode, // Plain text DDMM passcode
             isActive: true,
           },
         },
@@ -93,7 +90,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       sister,
-      generatedCode: secretCode, // Only returned ONCE during creation for Admin to copy
+      generatedCode: secretCode,
     });
   } catch (error) {
     console.error("Admin POST sister error:", error);

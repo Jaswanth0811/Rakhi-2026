@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedInput = hashCode(trimmedCode);
-    const legacy6Hash = trimmedCode.length === 4 ? hashCode(`${trimmedCode}26`) : "";
 
     // Fetch all active sister access records
     const allAccesses = await db.sisterAccess.findMany({
@@ -25,14 +24,14 @@ export async function POST(req: NextRequest) {
       include: { sister: true },
     });
 
-    // Match by hashed input, plain text code, legacy 6-digit hash, or code prefix
+    // Plain text direct match, codeHash match, or prefix match
     let matchedAccess = allAccesses.find((acc) => {
       if (!acc.sister) return false;
       return (
-        acc.codeHash === hashedInput ||
         acc.codeHash === trimmedCode ||
-        (legacy6Hash && acc.codeHash === legacy6Hash) ||
-        acc.codeHash.startsWith(trimmedCode)
+        acc.codeHash === hashedInput ||
+        acc.codeHash.startsWith(trimmedCode) ||
+        acc.codeHash.includes(trimmedCode)
       );
     });
 
