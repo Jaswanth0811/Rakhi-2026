@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import confetti from "canvas-confetti";
-import { Sparkles, Heart, Volume2, ChevronRight, Lock, Stamp, KeyRound, AlertCircle, Delete } from "lucide-react";
+import { Sparkles, Heart, Volume2, ChevronRight, Stamp } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface FinalLetterProps {
@@ -14,7 +14,7 @@ interface FinalLetterProps {
   onNext: () => void;
 }
 
-type LetterState = "sealed" | "entering_code" | "breaking_seal" | "unfolding" | "reading";
+type LetterState = "sealed" | "breaking_seal" | "unfolding" | "reading";
 
 export default function FinalLetter({
   sisterName,
@@ -23,87 +23,29 @@ export default function FinalLetter({
   onNext,
 }: FinalLetterProps) {
   const [letterState, setLetterState] = useState<LetterState>("sealed");
-  const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [shakeCount, setShakeCount] = useState(0);
 
   const paragraphs = finalMessage
     .split("\n\n")
     .filter((p) => p.trim().length > 0);
 
-  const handleStartCodeEntry = () => {
-    sfx.playChime();
-    setLetterState("entering_code");
-  };
+  const handleBreakSeal = () => {
+    sfx.playToyPop();
+    setLetterState("breaking_seal");
 
-  const handleKeypadPress = (numStr: string) => {
-    sfx.playPop();
-    if (errorMsg) setErrorMsg(null);
-    const emptyIndex = digits.findIndex((d) => d === "");
-    if (emptyIndex === -1) return;
-
-    const nextDigits = [...digits];
-    nextDigits[emptyIndex] = numStr;
-    setDigits(nextDigits);
-
-    if (emptyIndex === digits.length - 1) {
-      verifyDDMMCode(nextDigits.join(""));
-    }
-  };
-
-  const handleBackspace = () => {
-    sfx.playPop();
-    if (errorMsg) setErrorMsg(null);
-    const lastFilledIndex = digits.map((d) => d !== "").lastIndexOf(true);
-    if (lastFilledIndex === -1) return;
-
-    const nextDigits = [...digits];
-    nextDigits[lastFilledIndex] = "";
-    setDigits(nextDigits);
-  };
-
-  const verifyDDMMCode = async (codeToSubmit: string) => {
-    setIsVerifying(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await fetch("/api/rakhi/unlock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: codeToSubmit }),
+    setTimeout(() => {
+      sfx.playFanfare();
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ["#E07A5F", "#F4ACB7", "#D97706", "#FFFFFF", "#F59E0B"],
       });
-
-      if (!res.ok) {
-        setErrorMsg("Incorrect DDMM code. Enter your birth date & month.");
-        setShakeCount((prev) => prev + 1);
-        setIsVerifying(false);
-        return;
-      }
-
-      // Verified successfully! Break wax seal and open letter
-      sfx.playToyPop();
-      setLetterState("breaking_seal");
+      setLetterState("unfolding");
 
       setTimeout(() => {
-        sfx.playFanfare();
-        confetti({
-          particleCount: 90,
-          spread: 80,
-          origin: { y: 0.55 },
-          colors: ["#E07A5F", "#F4ACB7", "#D97706", "#FFFFFF", "#F59E0B"],
-        });
-        setLetterState("unfolding");
-
-        setTimeout(() => {
-          setLetterState("reading");
-        }, 1000);
-      }, 600);
-    } catch {
-      setErrorMsg("Connection error. Try again.");
-      setShakeCount((prev) => prev + 1);
-      setIsVerifying(false);
-    }
+        setLetterState("reading");
+      }, 1000);
+    }, 600);
   };
 
   const handleContinueToCeremony = () => {
@@ -118,16 +60,11 @@ export default function FinalLetter({
 
       <AnimatePresence mode="wait">
         {/* STAGE 1: SEALED PHYSICAL ENVELOPE SCENE */}
-        {letterState === "sealed" || letterState === "entering_code" || letterState === "breaking_seal" ? (
+        {letterState === "sealed" || letterState === "breaking_seal" ? (
           <motion.div
-            key={`sealed-envelope-scene-${shakeCount}`}
+            key="sealed-envelope-scene"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: 0,
-              x: shakeCount > 0 ? [-12, 12, -8, 8, -4, 4, 0] : 0,
-            }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_25px_60px_rgba(224,122,95,0.2)] text-center flex flex-col items-center text-gray-900"
@@ -146,7 +83,7 @@ export default function FinalLetter({
                 </span>
               </h2>
               <p className="text-xs text-gray-600 font-bold">
-                Enter your 4-digit DDMM birthday passcode to break the wax seal.
+                Tap the red wax seal below to break the seal and unfold your letter.
               </p>
             </div>
 
@@ -159,7 +96,7 @@ export default function FinalLetter({
                 {/* INTERACTIVE WAX SEAL BUTTON */}
                 <motion.button
                   type="button"
-                  onClick={handleStartCodeEntry}
+                  onClick={handleBreakSeal}
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                   className="relative z-20 p-5 rounded-full bg-gradient-to-tr from-[#991B1B] via-[#DC2626] to-[#7F1D1D] border-4 border-amber-100 shadow-[0_10px_30px_rgba(153,27,27,0.5)] cursor-pointer group flex flex-col items-center justify-center"
@@ -168,62 +105,9 @@ export default function FinalLetter({
                     <Stamp className="w-7 h-7 animate-pulse" />
                   </div>
                   <span className="absolute -bottom-3 text-[9px] font-black uppercase tracking-widest text-amber-950 bg-amber-200 px-3 py-0.5 rounded-full border border-amber-400 whitespace-nowrap shadow-md">
-                    UNLOCK WAX SEAL 🔑
+                    TAP SEAL TO UNBOX 🏷️
                   </span>
                 </motion.button>
-              </div>
-            )}
-
-            {/* STAGE: ENTER 4-DIGIT DDMM CODE TO UNLOCK LETTER */}
-            {letterState === "entering_code" && (
-              <div className="w-full space-y-4 pt-1">
-                {/* 4 Digit DDMM Input Display */}
-                <div className="flex justify-center gap-3">
-                  {digits.map((digit, idx) => (
-                    <div key={idx} className="relative">
-                      <div className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl bg-amber-50 border-2 flex items-center justify-center text-2xl font-mono font-extrabold text-gray-900 shadow-inner ${
-                        digit ? "border-[#E07A5F] bg-amber-100" : "border-amber-200"
-                      }`}>
-                        {digit || (idx < 2 ? "D" : "M")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {errorMsg && (
-                  <div className="flex items-center justify-center gap-1 text-xs text-rose-800 font-bold bg-rose-50 border border-rose-200 p-2 rounded-xl">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                {/* Keypad Buttons */}
-                <div className="grid grid-cols-3 gap-2">
-                  {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handleKeypadPress(num)}
-                      className="py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-gray-900 font-mono font-extrabold text-lg hover:bg-amber-100 active:scale-95 transition-all shadow-xs cursor-pointer"
-                    >
-                      {num}
-                    </button>
-                  ))}
-                  <div className="flex items-center justify-center text-amber-300">
-                    <Lock className="w-5 h-5 text-[#E07A5F]/40" />
-                  </div>
-                  <button
-                    onClick={() => handleKeypadPress("0")}
-                    className="py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-gray-900 font-mono font-extrabold text-lg hover:bg-amber-100 active:scale-95 transition-all shadow-xs cursor-pointer"
-                  >
-                    0
-                  </button>
-                  <button
-                    onClick={handleBackspace}
-                    className="py-2.5 rounded-xl bg-amber-200/70 border border-amber-300 text-gray-800 flex items-center justify-center hover:bg-amber-200 active:scale-95 transition-all shadow-xs cursor-pointer"
-                  >
-                    <Delete className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
             )}
 
