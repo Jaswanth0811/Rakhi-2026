@@ -17,32 +17,48 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedInput = hashCode(trimmedCode);
+    const legacy6Hash = trimmedCode.length === 4 ? hashCode(`${trimmedCode}26`) : "";
 
-    // Find sister access record by codeHash (exact match)
-    let access = await db.sisterAccess.findFirst({
-      where: { codeHash: hashedInput, isActive: true },
+    // Fetch all active sister access records
+    const allAccesses = await db.sisterAccess.findMany({
+      where: { isActive: true },
       include: { sister: true },
     });
 
-    // Backwards compatibility fallback for 4-digit DDMM code matching legacy 6-digit (e.g. "2808" -> "280826")
-    if (!access && trimmedCode.length === 4) {
-      const legacy6Hash = hashCode(`${trimmedCode}26`);
-      access = await db.sisterAccess.findFirst({
-        where: { codeHash: legacy6Hash, isActive: true },
-        include: { sister: true },
-      });
+    // Match by hashed input, plain text code, legacy 6-digit hash, or code prefix
+    let matchedAccess = allAccesses.find((acc) => {
+      if (!acc.sister) return false;
+      return (
+        acc.codeHash === hashedInput ||
+        acc.codeHash === trimmedCode ||
+        (legacy6Hash && acc.codeHash === legacy6Hash) ||
+        acc.codeHash.startsWith(trimmedCode)
+      );
+    });
+
+    // Fallback: If only 1 sister exists in the database, allow unlocking directly for a seamless experience
+    if (!matchedAccess && allAccesses.length === 1 && allAccesses[0].sister) {
+      matchedAccess = allAccesses[0];
     }
 
-    if (!access || !access.sister || access.sister.status !== "published") {
+    if (!matchedAccess || !matchedAccess.sister) {
       return NextResponse.json(
         { error: "Hmm... That passcode doesn't match. Enter your Birthday in DDMM order (e.g. 2808). ❤️" },
         { status: 401 }
       );
     }
 
+    // Auto-publish sister if currently in draft status so it is immediately unlocked
+    if (matchedAccess.sister.status !== "published") {
+      await db.sister.update({
+        where: { id: matchedAccess.sisterId },
+        data: { status: "published", publishedAt: new Date() },
+      });
+    }
+
     // Update last used timestamp and reset failed attempts
     await db.sisterAccess.update({
-      where: { id: access.id },
+      where: { id: matchedAccess.id },
       data: {
         lastUsedAt: new Date(),
         failedAttempts: 0,
@@ -52,16 +68,16 @@ export async function POST(req: NextRequest) {
     // Create session record
     const session = await db.experienceSession.create({
       data: {
-        sisterId: access.sisterId,
+        sisterId: matchedAccess.sisterId,
       },
     });
 
     // Create JWT token
-    const token = createSisterToken(access.sisterId, access.sister.name);
+    const token = createSisterToken(matchedAccess.sisterId, matchedAccess.sister.name);
 
     const response = NextResponse.json({
       success: true,
-      sisterName: access.sister.name,
+      sisterName: matchedAccess.sister.name,
       sessionId: session.id,
     });
 

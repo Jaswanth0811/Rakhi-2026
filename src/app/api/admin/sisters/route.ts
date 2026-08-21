@@ -76,7 +76,8 @@ export async function POST(req: NextRequest) {
         themeId: themeId || "warm_sunset",
         songId: songId || null,
         motionStyle: motionStyle || "cinematic",
-        status: "draft",
+        status: "published",
+        publishedAt: new Date(),
         access: {
           create: {
             codeHash,
