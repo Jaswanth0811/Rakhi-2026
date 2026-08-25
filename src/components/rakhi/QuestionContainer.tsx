@@ -10,7 +10,6 @@ import TextQuestion from "./questions/TextQuestion";
 import RatingQuestion from "./questions/RatingQuestion";
 import ImageChoiceQuestion from "./questions/ImageChoiceQuestion";
 import ReactionOverlay from "./ReactionOverlay";
-import MemoryRevealModal from "./MemoryRevealModal";
 import { sfx } from "@/lib/sfx";
 
 interface Memory {
@@ -54,7 +53,6 @@ export default function QuestionContainer({
     message?: string | null;
     animationType?: string | null;
   } | null>(null);
-  const [activeMemory, setActiveMemory] = useState<Memory | null>(null);
 
   const currentQ = questions[currentIndex];
 
@@ -87,8 +85,6 @@ export default function QuestionContainer({
         message: option.responseMessage,
         animationType: option.animationType || "confetti",
       });
-    } else if (option?.memory) {
-      setActiveMemory(option.memory);
     } else {
       // Advance to next question immediately
       advanceNext(option);
@@ -100,17 +96,7 @@ export default function QuestionContainer({
       (o) => o.responseMessage === activeReaction?.message
     );
     setActiveReaction(null);
-
-    if (option?.memory) {
-      setActiveMemory(option.memory);
-    } else {
-      advanceNext(option);
-    }
-  };
-
-  const handleMemoryDone = () => {
-    setActiveMemory(null);
-    advanceNext();
+    advanceNext(option);
   };
 
   const advanceNext = (option?: Option | null) => {
@@ -227,15 +213,6 @@ export default function QuestionContainer({
           message={activeReaction.message}
           animationType={activeReaction.animationType}
           onDone={handleReactionDone}
-        />
-      )}
-
-      {/* Memory Reveal Modal */}
-      {activeMemory && (
-        <MemoryRevealModal
-          imageUrl={activeMemory.imageUrl}
-          caption={activeMemory.caption}
-          onClose={handleMemoryDone}
         />
       )}
     </div>
