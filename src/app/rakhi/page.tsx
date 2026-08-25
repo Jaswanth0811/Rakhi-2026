@@ -7,6 +7,7 @@ import CinematicUnlock from "@/components/rakhi/CinematicUnlock";
 import PersonalIntro from "@/components/rakhi/PersonalIntro";
 import QuestionContainer from "@/components/rakhi/QuestionContainer";
 import FinalLetter from "@/components/rakhi/FinalLetter";
+import SisterReplyScreen from "@/components/rakhi/SisterReplyScreen";
 import RakhiCanvasReveal from "@/components/rakhi/RakhiCanvasReveal";
 import ClosingScreen from "@/components/rakhi/ClosingScreen";
 import ParticleCanvas from "@/components/rakhi/ParticleCanvas";
@@ -19,6 +20,7 @@ type Step =
   | "PERSONAL_INTRO"
   | "QUESTIONS"
   | "FINAL_LETTER"
+  | "SISTER_REPLY"
   | "RAKHI_REVEAL"
   | "CLOSING";
 
@@ -111,7 +113,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <CodeUnlockScreen onUnlockSuccess={handleUnlockSuccess} />
@@ -124,7 +126,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <CinematicUnlock
@@ -140,7 +142,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <PersonalIntro
@@ -163,7 +165,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <QuestionContainer
@@ -180,13 +182,29 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <FinalLetter
                 sisterName={data.sister.name}
                 photoUrl={data.sister.photoUrl}
                 finalMessage={data.sister.finalMessage}
+                onNext={() => setStep("SISTER_REPLY")}
+              />
+            </motion.section>
+          )}
+
+          {step === "SISTER_REPLY" && data && (
+            <motion.section
+              key="sister-reply-step"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3 }}
+              className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
+            >
+              <SisterReplyScreen
+                sisterName={data.sister.name}
                 onNext={() => setStep("RAKHI_REVEAL")}
               />
             </motion.section>
@@ -198,7 +216,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <RakhiCanvasReveal
@@ -214,7 +232,7 @@ export default function RakhiPublicPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="h-[100dvh] w-full snap-start snap-always flex flex-col items-center justify-center relative will-change-transform"
             >
               <ClosingScreen

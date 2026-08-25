@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import confetti from "canvas-confetti";
-import { Sparkles, Heart, Volume2, ChevronRight, Stamp } from "lucide-react";
+import { Sparkles, Heart, Volume2, ChevronRight, Stamp, MessageCircle } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface FinalLetterProps {
@@ -44,8 +44,8 @@ export default function FinalLetter({
 
       setTimeout(() => {
         setLetterState("reading");
-      }, 1000);
-    }, 600);
+      }, 900);
+    }, 550);
   };
 
   const handleContinueToCeremony = () => {
@@ -54,7 +54,7 @@ export default function FinalLetter({
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900">
+    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900 select-none touch-manipulation">
       {/* Ambient background glow */}
       <div className="absolute w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full bg-pink-200/50 blur-[140px] pointer-events-none" />
 
@@ -63,11 +63,11 @@ export default function FinalLetter({
         {letterState === "sealed" || letterState === "breaking_seal" ? (
           <motion.div
             key="sealed-envelope-scene"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_25px_60px_rgba(224,122,95,0.2)] text-center flex flex-col items-center text-gray-900"
+            exit={{ opacity: 0, scale: 0.96, y: -15 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_25px_60px_rgba(224,122,95,0.2)] text-center flex flex-col items-center text-gray-900 will-change-transform"
           >
             {/* Header Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-300 text-[#D97706] text-xs font-extrabold tracking-widest uppercase shadow-xs">
@@ -97,9 +97,9 @@ export default function FinalLetter({
                 <motion.button
                   type="button"
                   onClick={handleBreakSeal}
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
-                  className="relative z-20 p-5 rounded-full bg-gradient-to-tr from-[#991B1B] via-[#DC2626] to-[#7F1D1D] border-4 border-amber-100 shadow-[0_10px_30px_rgba(153,27,27,0.5)] cursor-pointer group flex flex-col items-center justify-center"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.94 }}
+                  className="relative z-20 p-5 rounded-full bg-gradient-to-tr from-[#991B1B] via-[#DC2626] to-[#7F1D1D] border-4 border-amber-100 shadow-[0_10px_30px_rgba(153,27,27,0.5)] cursor-pointer group flex flex-col items-center justify-center active:scale-94"
                 >
                   <div className="w-10 h-10 flex items-center justify-center text-amber-200">
                     <Stamp className="w-7 h-7 animate-pulse" />
@@ -115,14 +115,14 @@ export default function FinalLetter({
             {letterState === "breaking_seal" && (
               <div className="py-8 flex flex-col items-center justify-center space-y-3">
                 <motion.div
-                  animate={{ scale: [1, 1.3, 0], rotate: [0, -15, 15, 0] }}
-                  transition={{ duration: 0.6 }}
+                  animate={{ scale: [1, 1.25, 0], rotate: [0, -15, 15, 0] }}
+                  transition={{ duration: 0.55 }}
                   className="p-6 rounded-full bg-rose-600 text-white shadow-xl"
                 >
                   <Stamp className="w-10 h-10 animate-spin" />
                 </motion.div>
                 <span className="text-xs font-bold text-[#E07A5F] uppercase tracking-widest animate-pulse">
-                  Breaking Wax Seal & Unfolding Letter...
+                  Unfolding Letter...
                 </span>
               </div>
             )}
@@ -131,10 +131,10 @@ export default function FinalLetter({
           /* STAGE 2: UNFOLDED IVORY PARCHMENT LETTER */
           <motion.div
             key="unfolded-letter-scene"
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 w-full max-w-xl bg-[#FFFBEB]/95 border-2 border-amber-300/90 backdrop-blur-3xl rounded-3xl p-5 sm:p-8 space-y-5 shadow-[0_25px_60px_rgba(217,119,6,0.2)] text-left my-4"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative z-10 w-full max-w-xl bg-[#FFFBEB]/95 border-2 border-amber-300/90 backdrop-blur-3xl rounded-3xl p-5 sm:p-8 space-y-5 shadow-[0_25px_60px_rgba(217,119,6,0.2)] text-left my-4 will-change-transform"
           >
             {/* Top Bar with Sister Photo & Audio Equalizer */}
             <div className="flex items-center justify-between border-b border-amber-200/80 pb-4">
@@ -174,9 +174,9 @@ export default function FinalLetter({
               {paragraphs.map((paragraph, idx) => (
                 <motion.p
                   key={idx}
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: idx * 0.3 }}
+                  transition={{ duration: 0.4, delay: idx * 0.2 }}
                   className="font-serif text-base sm:text-lg text-slate-900 leading-relaxed font-bold whitespace-pre-wrap selection:bg-rose-200"
                 >
                   {paragraph}
@@ -186,25 +186,25 @@ export default function FinalLetter({
 
             {/* Emotional Reading Pause & Proceed Button */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: paragraphs.length * 0.3 + 0.4 }}
+              transition={{ delay: paragraphs.length * 0.2 + 0.2 }}
               className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3"
             >
               <span className="text-xs text-amber-900 font-bold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" /> Next: Virtual Rakhi Ceremony
+                <MessageCircle className="w-3.5 h-3.5 text-[#E07A5F]" /> Next: Reply To Brother
               </span>
 
               <motion.button
                 onClick={handleContinueToCeremony}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
                 }}
-                className="w-full sm:w-auto py-3.5 px-8 rounded-2xl text-white font-black tracking-widest text-xs sm:text-sm shadow-md cursor-pointer flex items-center justify-center gap-2 border border-rose-200"
+                className="w-full sm:w-auto py-3.5 px-7 rounded-2xl text-white font-black tracking-widest text-xs sm:text-sm shadow-md cursor-pointer flex items-center justify-center gap-2 border border-rose-200 active:scale-95"
               >
-                <span>PROCEED TO VIRTUAL RAKHI CEREMONY 🏵️</span>
+                <span>LEAVE A REPLY FOR BROTHER ❤️</span>
                 <ChevronRight className="w-4 h-4 text-white" />
               </motion.button>
             </motion.div>
