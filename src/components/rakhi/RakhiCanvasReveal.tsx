@@ -293,7 +293,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
       {/* Ambient background glow */}
       <div className="absolute w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full bg-pink-200/50 blur-[130px] pointer-events-none" />
 
-      {/* FLOATING HEART SYMBOLS LAYER */}
+      {/* FLOATING HEART SYMBOLS LAYER (Background) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         {hearts.map((h) => (
           <motion.div
@@ -322,8 +322,8 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
         ))}
       </div>
 
-      {/* FLOATING & POPPABLE BALLOONS LAYER */}
-      <div className="absolute inset-0 overflow-hidden z-20 pointer-events-auto">
+      {/* FLOATING & POPPABLE BALLOONS LAYER (Pass clicks through to card) */}
+      <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none">
         {balloons.map((b) =>
           !b.popped ? (
             <motion.div
@@ -364,7 +364,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
               }}
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.85 }}
-              className="absolute cursor-pointer flex flex-col items-center select-none group touch-manipulation will-change-transform"
+              className="absolute pointer-events-auto cursor-pointer flex flex-col items-center select-none group touch-manipulation will-change-transform"
               title="Tap to Pop Balloon! 🎈"
             >
               {/* Balloon 3D Oval Body */}
@@ -435,12 +435,12 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
         </AnimatePresence>
       </div>
 
-      {/* MAIN RAKHI CEREMONY CARD */}
+      {/* MAIN RAKHI CEREMONY CARD (Highest z-index so all buttons & interactions work 100%) */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.9 }}
-        className="relative z-10 w-full max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] text-center flex flex-col items-center"
+        className="relative z-30 pointer-events-auto w-full max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] text-center flex flex-col items-center will-change-transform"
       >
         {/* Festive Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-300 text-[#E07A5F] text-xs font-black tracking-widest uppercase shadow-xs">
@@ -492,15 +492,16 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
           </p>
         </div>
 
-        {/* Action Button */}
+        {/* View Summary Action Button */}
         <motion.button
+          type="button"
           onClick={handleNextStep}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
           style={{
             background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
           }}
-          className="w-full py-4 rounded-2xl text-white font-black tracking-widest text-sm sm:text-base shadow-lg shadow-rose-200 cursor-pointer flex items-center justify-center gap-2 border border-rose-200"
+          className="w-full py-4 rounded-2xl text-white font-black tracking-widest text-sm sm:text-base shadow-lg shadow-rose-200 cursor-pointer flex items-center justify-center gap-2 border border-rose-200 select-none active:scale-95"
         >
           <span>VIEW SUMMARY</span>
           <Heart className="w-4 h-4 text-white fill-white" />
