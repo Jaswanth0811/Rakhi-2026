@@ -23,16 +23,17 @@ export default function ReactionOverlay({
       animationType === "happy"
     ) {
       confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.55 },
         colors: ["#E07A5F", "#F4ACB7", "#D97706", "#FBBF24"],
       });
     }
 
+    // Auto-advance reaction in 1.1s for maximum speed
     const timer = setTimeout(() => {
       onDone();
-    }, 2800);
+    }, 1100);
 
     return () => clearTimeout(timer);
   }, [animationType, onDone]);
@@ -40,37 +41,47 @@ export default function ReactionOverlay({
   const renderIcon = () => {
     switch (animationType) {
       case "funny_shake":
-        return <Smile className="w-12 h-12 text-[#E07A5F] animate-bounce" />;
+        return <Smile className="w-10 h-10 text-[#E07A5F] animate-bounce" />;
       case "emotional":
-        return <Heart className="w-12 h-12 text-rose-500 animate-pulse" />;
+        return <Heart className="w-10 h-10 text-rose-500 animate-pulse" />;
       case "celebration":
       case "confetti":
-        return <PartyPopper className="w-12 h-12 text-[#D97706] animate-bounce" />;
+        return <PartyPopper className="w-10 h-10 text-[#D97706] animate-bounce" />;
       default:
-        return <Sparkles className="w-12 h-12 text-[#E07A5F] animate-spin" />;
+        return <Sparkles className="w-10 h-10 text-[#E07A5F] animate-spin" />;
     }
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-gray-950/60 backdrop-blur-md"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.2 }}
+        onClick={onDone}
+        className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-gray-950/50 backdrop-blur-sm cursor-pointer select-none touch-manipulation"
       >
         <motion.div
-          initial={{ scale: 0.8, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.8, y: 20 }}
-          className="max-w-sm w-full bg-white border-2 border-rose-200 rounded-3xl p-8 text-center space-y-4 shadow-2xl"
+          initial={{ opacity: 0, y: 15, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -15, scale: 0.9 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="relative max-w-sm w-full bg-white/95 border-2 border-rose-200 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 space-y-4 text-center shadow-2xl text-gray-900"
         >
-          <div className="flex justify-center">{renderIcon()}</div>
+          <div className="p-4 rounded-full bg-rose-50 border border-rose-200 w-16 h-16 mx-auto flex items-center justify-center shadow-xs">
+            {renderIcon()}
+          </div>
+
           {message && (
-            <p className="font-serif text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
-              {message}
+            <p className="font-serif text-lg sm:text-xl font-bold text-gray-900 leading-snug">
+              &ldquo;{message}&rdquo;
             </p>
           )}
+
+          <div className="pt-1 text-[10px] text-gray-700 font-extrabold uppercase tracking-widest animate-pulse">
+            Tap anywhere to skip ⏩
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

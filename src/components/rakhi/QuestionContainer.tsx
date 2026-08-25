@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, ChevronDown } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import MultipleChoiceQuestion from "./questions/MultipleChoiceQuestion";
 import YesNoQuestion from "./questions/YesNoQuestion";
 import EmojiQuestion from "./questions/EmojiQuestion";
@@ -11,6 +11,7 @@ import RatingQuestion from "./questions/RatingQuestion";
 import ImageChoiceQuestion from "./questions/ImageChoiceQuestion";
 import ReactionOverlay from "./ReactionOverlay";
 import MemoryRevealModal from "./MemoryRevealModal";
+import { sfx } from "@/lib/sfx";
 
 interface Memory {
   id: string;
@@ -49,8 +50,6 @@ export default function QuestionContainer({
   onCompleteAll,
 }: QuestionContainerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [displayedText, setDisplayedText] = useState("");
-  const [showOptions, setShowOptions] = useState(false);
   const [activeReaction, setActiveReaction] = useState<{
     message?: string | null;
     animationType?: string | null;
@@ -62,47 +61,27 @@ export default function QuestionContainer({
   useEffect(() => {
     if (!questions || questions.length === 0) {
       onCompleteAll();
-      return;
     }
-    if (!currentQ) return;
-    setDisplayedText("");
-    setShowOptions(false);
-
-    let charIdx = 0;
-    const fullText = currentQ.question;
-
-    const interval = setInterval(() => {
-      if (charIdx < fullText.length) {
-        setDisplayedText(fullText.slice(0, charIdx + 1));
-        charIdx++;
-      } else {
-        clearInterval(interval);
-        setTimeout(() => setShowOptions(true), 300);
-      }
-    }, 35);
-
-    return () => clearInterval(interval);
-  }, [currentIndex, currentQ]);
+  }, [questions, onCompleteAll]);
 
   if (!currentQ) return null;
 
-  const handleAnswerSelect = async (optionId: string, answerValue: string) => {
+  const handleAnswerSelect = (optionId: string, answerValue: string) => {
+    sfx.playPop();
     const option = currentQ.options.find((o) => o.id === optionId || o.value === answerValue);
 
-    try {
-      await fetch("/api/rakhi/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: currentQ.id,
-          answer: answerValue,
-          optionId: option?.id || null,
-        }),
-      });
-    } catch (e) {
-      console.error("Failed to save answer:", e);
-    }
+    // Save answer asynchronously in the background so UI advances instantly (< 10ms)
+    fetch("/api/rakhi/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId: currentQ.id,
+        answer: answerValue,
+        optionId: option?.id || null,
+      }),
+    }).catch((e) => console.error("Async answer save error:", e));
 
+    // Instant reaction / memory reveal or next question
     if (option && (option.responseMessage || option.animationType)) {
       setActiveReaction({
         message: option.responseMessage,
@@ -147,27 +126,33 @@ export default function QuestionContainer({
     }
   };
 
-  const renderQuestionOptions = () => {
+  const renderQuestionComponent = () => {
     switch (currentQ.type) {
-      case "multiple_choice":
-        return (
-          <MultipleChoiceQuestion options={currentQ.options} onSelect={handleAnswerSelect} />
-        );
       case "yes_no":
-        return <YesNoQuestion options={currentQ.options} onSelect={handleAnswerSelect} />;
+        return (
+          <YesNoQuestion
+            options={currentQ.options}
+            onSelect={handleAnswerSelect}
+          />
+        );
       case "emoji":
-        return <EmojiQuestion options={currentQ.options} onSelect={handleAnswerSelect} />;
+        return (
+          <EmojiQuestion
+            options={currentQ.options}
+            onSelect={handleAnswerSelect}
+          />
+        );
       case "text":
         return (
           <TextQuestion
-            optionId={currentQ.options[0]?.id}
+            optionId={currentQ.options[0]?.id || "text_input"}
             onSelect={handleAnswerSelect}
           />
         );
       case "rating":
         return (
           <RatingQuestion
-            optionId={currentQ.options[0]?.id}
+            optionId={currentQ.options[0]?.id || "rating_input"}
             onSelect={handleAnswerSelect}
           />
         );
@@ -175,19 +160,63 @@ export default function QuestionContainer({
         return (
           <ImageChoiceQuestion
             memories={memories}
-            onSelect={(memId, caption) => handleAnswerSelect(memId, caption)}
+            onSelect={handleAnswerSelect}
           />
         );
+      case "multiple_choice":
       default:
         return (
-          <MultipleChoiceQuestion options={currentQ.options} onSelect={handleAnswerSelect} />
+          <MultipleChoiceQuestion
+            options={currentQ.options}
+            onSelect={handleAnswerSelect}
+          />
         );
     }
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900">
-      {/* Reaction Overlay */}
+    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900 select-none touch-manipulation">
+      {/* Ambient Glow */}
+      <div className="absolute w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full bg-rose-200/50 blur-[130px] pointer-events-none" />
+
+      {/* Main Question Card Container */}
+      <div className="relative z-10 w-full max-w-lg sm:max-w-xl flex flex-col items-center space-y-6">
+        {/* Progress Counter Pill */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-rose-200/90 shadow-xs text-xs font-black uppercase text-[#E07A5F] tracking-widest backdrop-blur-xl"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-[#E07A5F]" />
+          <span>
+            Question {currentIndex + 1} of {questions.length}
+          </span>
+        </motion.div>
+
+        {/* Dynamic Question Card with Instant Text & Options */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQ.id}
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -15 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="w-full bg-white/95 border-2 border-rose-200/90 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.18)] text-gray-900 text-center will-change-transform"
+          >
+            {/* Question Text */}
+            <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-gray-900 leading-snug tracking-tight">
+              {currentQ.question}
+            </h2>
+
+            {/* Answer Options Component */}
+            <div className="w-full pt-2">
+              {renderQuestionComponent()}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Reaction Overlay Modal */}
       {activeReaction && (
         <ReactionOverlay
           message={activeReaction.message}
@@ -204,61 +233,6 @@ export default function QuestionContainer({
           onClose={handleMemoryDone}
         />
       )}
-
-      {/* Progress Dots Bar */}
-      <div className="fixed top-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-xl border border-rose-200 shadow-md">
-        {questions.map((q, i) => (
-          <div
-            key={q.id}
-            className={`h-2.5 rounded-full transition-all duration-300 ${
-              i === currentIndex
-                ? "w-7 bg-[#E07A5F] shadow-sm"
-                : i < currentIndex
-                ? "w-2.5 bg-[#E07A5F]/70"
-                : "w-2.5 bg-rose-200"
-            }`}
-          />
-        ))}
-      </div>
-
-      <motion.div
-        key={currentQ.id}
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-sm sm:max-w-xl bg-white/95 border-2 border-rose-200/80 backdrop-blur-3xl rounded-3xl p-6 sm:p-10 space-y-6 shadow-[0_20px_50px_rgba(224,122,95,0.15)] my-10"
-      >
-        {/* Header Question Counter */}
-        <div className="text-xs uppercase tracking-widest font-black text-[#E07A5F] px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200 inline-block shadow-sm">
-          QUESTION {String(currentIndex + 1).padStart(2, "0")} / {String(questions.length).padStart(2, "0")}
-        </div>
-
-        {/* Question Text with Typewriter effect */}
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 min-h-[70px] flex items-center justify-center leading-snug drop-shadow-sm px-2">
-          {displayedText}
-          <span className="inline-block w-1.5 h-7 bg-[#E07A5F] ml-1 animate-pulse" />
-        </h2>
-
-        {/* Options */}
-        <AnimatePresence>
-          {showOptions && (
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="pt-2 space-y-4"
-            >
-              {renderQuestionOptions()}
-
-              {/* Comforting Reassurance Badge */}
-              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-900 bg-emerald-50 border border-emerald-300 py-2.5 px-4 rounded-xl shadow-sm mt-4">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Don&apos;t worry! Your answers are kept completely private and safe. ❤️</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
     </div>
   );
 }
