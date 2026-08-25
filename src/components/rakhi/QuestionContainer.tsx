@@ -11,7 +11,6 @@ import RatingQuestion from "./questions/RatingQuestion";
 import ImageChoiceQuestion from "./questions/ImageChoiceQuestion";
 import ReactionOverlay from "./ReactionOverlay";
 import MemoryRevealModal from "./MemoryRevealModal";
-import ContinueExperienceModal from "./ContinueExperienceModal";
 import { sfx } from "@/lib/sfx";
 
 interface Memory {
@@ -56,14 +55,6 @@ export default function QuestionContainer({
     animationType?: string | null;
   } | null>(null);
   const [activeMemory, setActiveMemory] = useState<Memory | null>(null);
-  
-  // AI Continue Experience Modal state
-  const [showContinueModal, setShowContinueModal] = useState(false);
-  const [aiSummaryData, setAiSummaryData] = useState<{
-    title: string;
-    summaryMessage: string;
-  } | null>(null);
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   const currentQ = questions[currentIndex];
 
@@ -73,13 +64,13 @@ export default function QuestionContainer({
     }
   }, [questions, onCompleteAll]);
 
-  if (!currentQ && !showContinueModal) return null;
+  if (!currentQ) return null;
 
   const handleAnswerSelect = (optionId: string, answerValue: string) => {
     sfx.playPop();
     const option = currentQ.options.find((o) => o.id === optionId || o.value === answerValue);
 
-    // Save answer and fetch dynamic AI reaction
+    // Save answer and fetch dynamic AI reaction in background
     fetch("/api/rakhi/answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -107,7 +98,6 @@ export default function QuestionContainer({
         animationType: option.animationType || "confetti",
       });
     } else {
-      // Show default AI reaction while server processes
       setActiveReaction({
         message: `Love your answer! ❤️`,
         animationType: "confetti",
@@ -145,36 +135,8 @@ export default function QuestionContainer({
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // All questions completed! Trigger AI experience summary popup
-      fetchAISummaryAndShowModal();
-    }
-  };
-
-  const fetchAISummaryAndShowModal = async () => {
-    setShowContinueModal(true);
-    setIsLoadingSummary(true);
-
-    try {
-      const res = await fetch("/api/rakhi/experience-summary", {
-        method: "POST",
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setAiSummaryData({
-          title: json.title || "Our Sibling Story So Far ❤️",
-          summaryMessage:
-            json.summaryMessage ||
-            "Looking at all your answers, our bond is full of sweet memories, laughs, and love. Now, I have written something special straight from my heart...",
-        });
-      }
-    } catch {
-      setAiSummaryData({
-        title: "Our Sibling Story So Far ❤️",
-        summaryMessage:
-          "Looking at all your answers, our bond is full of sweet memories, laughs, and love. Now, I have written something special straight from my heart...",
-      });
-    } finally {
-      setIsLoadingSummary(false);
+      // Directly complete all questions and proceed to final letter
+      onCompleteAll();
     }
   };
 
@@ -233,43 +195,41 @@ export default function QuestionContainer({
       <div className="absolute w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full bg-rose-200/50 blur-[130px] pointer-events-none" />
 
       {/* Main Question Card Container */}
-      {currentQ && !showContinueModal && (
-        <div className="relative z-10 w-full max-w-lg sm:max-w-xl flex flex-col items-center space-y-6">
-          {/* Progress Counter Pill */}
+      <div className="relative z-10 w-full max-w-lg sm:max-w-xl flex flex-col items-center space-y-6">
+        {/* Progress Counter Pill */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-rose-200/90 shadow-xs text-xs font-black uppercase text-[#E07A5F] tracking-widest backdrop-blur-xl"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-[#E07A5F]" />
+          <span>
+            Question {currentIndex + 1} of {questions.length}
+          </span>
+        </motion.div>
+
+        {/* Dynamic Question Card with Instant Text & Options */}
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-rose-200/90 shadow-xs text-xs font-black uppercase text-[#E07A5F] tracking-widest backdrop-blur-xl"
+            key={currentQ.id}
+            initial={{ opacity: 0, scale: 0.96, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -15 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="w-full bg-white/95 border-2 border-rose-200/90 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.18)] text-gray-900 text-center will-change-transform"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#E07A5F]" />
-            <span>
-              Question {currentIndex + 1} of {questions.length}
-            </span>
+            {/* Question Text */}
+            <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-gray-900 leading-snug tracking-tight">
+              {currentQ.question}
+            </h2>
+
+            {/* Answer Options Component */}
+            <div className="w-full pt-2">
+              {renderQuestionComponent()}
+            </div>
           </motion.div>
-
-          {/* Dynamic Question Card with Instant Text & Options */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentQ.id}
-              initial={{ opacity: 0, scale: 0.96, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: -15 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="w-full bg-white/95 border-2 border-rose-200/90 backdrop-blur-3xl rounded-3xl p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.18)] text-gray-900 text-center will-change-transform"
-            >
-              {/* Question Text */}
-              <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-gray-900 leading-snug tracking-tight">
-                {currentQ.question}
-              </h2>
-
-              {/* Answer Options Component */}
-              <div className="w-full pt-2">
-                {renderQuestionComponent()}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
 
       {/* Reaction Overlay Modal (After Each Question) */}
       {activeReaction && (
@@ -286,19 +246,6 @@ export default function QuestionContainer({
           imageUrl={activeMemory.imageUrl}
           caption={activeMemory.caption}
           onClose={handleMemoryDone}
-        />
-      )}
-
-      {/* Continue Experience Modal (After All Questions Completed) */}
-      {showContinueModal && (
-        <ContinueExperienceModal
-          title={aiSummaryData?.title}
-          summaryMessage={
-            aiSummaryData?.summaryMessage ||
-            "Analyzing all your answers with AI... ✨"
-          }
-          isLoading={isLoadingSummary}
-          onContinue={onCompleteAll}
         />
       )}
     </div>
