@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Send, SkipForward, Heart, Sparkles, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Send, Sparkles, MessageCircle, CheckCircle2 } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface SisterReplyScreenProps {
@@ -30,18 +30,16 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
   };
 
   const handleSendReply = async () => {
-    if (isSending) return;
+    if (isSending || replyText.trim().length === 0) return;
     sfx.playToyPop();
     setIsSending(true);
 
     try {
-      if (replyText.trim()) {
-        await fetch("/api/rakhi/reply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: replyText.trim() }),
-        });
-      }
+      await fetch("/api/rakhi/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: replyText.trim() }),
+      });
 
       sfx.playFanfare();
       confetti({
@@ -60,10 +58,7 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
     }
   };
 
-  const handleSkip = () => {
-    sfx.playChime();
-    onNext();
-  };
+  const isTextEmpty = replyText.trim().length === 0;
 
   return (
     <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900 select-none touch-manipulation">
@@ -88,7 +83,7 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
             A Message For Your Brother 💌
           </h2>
           <p className="text-xs text-gray-600 font-bold">
-            Leave a note or sweet message for him, or skip to the Rakhi ceremony.
+            Choose a message idea below or type your personal message to send to your brother.
           </p>
         </div>
 
@@ -122,18 +117,24 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
           />
         </div>
 
-        {/* Action Buttons: Send Message vs Skip */}
-        <div className="w-full space-y-2.5 pt-1">
+        {/* Action Button: Send Message (Disabled when text is empty) */}
+        <div className="w-full pt-1">
           <motion.button
             type="button"
             onClick={handleSendReply}
-            disabled={isSending}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.96 }}
+            disabled={isSending || isTextEmpty}
+            whileHover={!isTextEmpty ? { scale: 1.02 } : {}}
+            whileTap={!isTextEmpty ? { scale: 0.96 } : {}}
             style={{
-              background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+              background: isTextEmpty
+                ? "#E5E7EB"
+                : "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
             }}
-            className="w-full py-4 rounded-2xl text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-rose-200/60 border border-rose-200 flex items-center justify-center gap-2 cursor-pointer active:scale-96 transition-all"
+            className={`w-full py-4 rounded-2xl font-extrabold text-xs sm:text-sm uppercase tracking-wider border shadow-md flex items-center justify-center gap-2 transition-all ${
+              isTextEmpty
+                ? "text-gray-400 border-gray-300 cursor-not-allowed opacity-60"
+                : "text-white border-rose-200 shadow-rose-200/60 cursor-pointer active:scale-96"
+            }`}
           >
             {sentSuccess ? (
               <>
@@ -142,6 +143,8 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
               </>
             ) : isSending ? (
               <span>SENDING YOUR MESSAGE... ⏳</span>
+            ) : isTextEmpty ? (
+              <span>TYPE YOUR MESSAGE ABOVE TO SEND ✍️</span>
             ) : (
               <>
                 <Send className="w-4 h-4 text-white" />
@@ -149,15 +152,6 @@ export default function SisterReplyScreen({ sisterName, onNext }: SisterReplyScr
               </>
             )}
           </motion.button>
-
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="w-full py-3 rounded-xl bg-transparent hover:bg-rose-50 border border-transparent hover:border-rose-200 text-gray-700 hover:text-gray-900 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
-          >
-            <span>Skip To Virtual Rakhi Ceremony</span>
-            <SkipForward className="w-3.5 h-3.5 text-gray-600" />
-          </button>
         </div>
       </motion.div>
     </div>

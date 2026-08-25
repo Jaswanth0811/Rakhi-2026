@@ -8,9 +8,9 @@ import {
   Mail,
   Wand2,
   KeyRound,
-  Eye,
   MessageSquare,
   BarChart3,
+  HeartHandshake,
 } from "lucide-react";
 
 export default function SisterHubPage({ params }: { params: Promise<{ id: string }> }) {
@@ -126,6 +126,25 @@ export default function SisterHubPage({ params }: { params: Promise<{ id: string
 
       {/* Grid of Control Modules */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* NEW CARD: Her Letter */}
+        <Link
+          href={`/rakhi/admin/sisters/${id}/reply`}
+          className="bg-white border-2 border-rose-300 hover:border-[#E07A5F] p-6 rounded-2xl space-y-3 transition-all group shadow-sm hover:shadow-md relative overflow-hidden"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 text-white group-hover:scale-110 transition-transform shadow-xs">
+              <HeartHandshake className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#E07A5F] bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+              HER RESPONSE
+            </span>
+          </div>
+          <h3 className="font-serif text-lg font-bold text-gray-900">Her Letter</h3>
+          <p className="text-xs text-gray-600 font-semibold">
+            View the personal letter & reply message {sister.name} sent back to you.
+          </p>
+        </Link>
+
         <Link
           href={`/rakhi/admin/sisters/${id}/questions`}
           className="bg-white border border-rose-200 hover:border-[#E07A5F] p-6 rounded-2xl space-y-3 transition-all group shadow-xs hover:shadow-md"
@@ -185,7 +204,7 @@ export default function SisterHubPage({ params }: { params: Promise<{ id: string
           </div>
           <h3 className="font-serif text-lg font-bold text-gray-900">Security & Access Code</h3>
           <p className="text-xs text-gray-600 font-semibold">
-            Manage her 6-digit access code & unlock status.
+            Manage her 4-digit DDMM birthday access code & unlock status.
           </p>
         </Link>
 
