@@ -68,9 +68,9 @@ export default function QuestionContainer({
 
   const handleAnswerSelect = (optionId: string, answerValue: string) => {
     sfx.playPop();
-    const option = currentQ.options.find((o) => o.id === optionId || o.value === answerValue);
+    const option = currentQ.options?.find((o) => o.id === optionId || o.value === answerValue);
 
-    // Save answer and fetch dynamic AI reaction in background
+    // Save answer in background without blocking or re-triggering UI state
     fetch("/api/rakhi/answer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,29 +79,19 @@ export default function QuestionContainer({
         answer: answerValue,
         optionId: option?.id || null,
       }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.reaction?.responseMessage) {
-          setActiveReaction({
-            message: data.reaction.responseMessage,
-            animationType: data.reaction.animationType || "confetti",
-          });
-        }
-      })
-      .catch((e) => console.error("Async answer save error:", e));
+    }).catch((e) => console.error("Async answer save error:", e));
 
-    // Instant local reaction feedback if option has preset
+    // If this option has a specific custom response message / animation, show it once
     if (option && (option.responseMessage || option.animationType)) {
       setActiveReaction({
         message: option.responseMessage,
         animationType: option.animationType || "confetti",
       });
+    } else if (option?.memory) {
+      setActiveMemory(option.memory);
     } else {
-      setActiveReaction({
-        message: `Love your answer! ❤️`,
-        animationType: "confetti",
-      });
+      // Advance to next question immediately
+      advanceNext(option);
     }
   };
 
@@ -135,7 +125,7 @@ export default function QuestionContainer({
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // Directly complete all questions and proceed to final letter
+      // Directly complete questions and open Final Letter
       onCompleteAll();
     }
   };
@@ -231,7 +221,7 @@ export default function QuestionContainer({
         </AnimatePresence>
       </div>
 
-      {/* Reaction Overlay Modal (After Each Question) */}
+      {/* Reaction Overlay Modal */}
       {activeReaction && (
         <ReactionOverlay
           message={activeReaction.message}
