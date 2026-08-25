@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, ArrowRight, RotateCcw, Heart } from "lucide-react";
+import { Lock, Sparkles, AlertCircle, Delete, KeyRound, Play, Pause, Gift, ArrowRight, RotateCcw, Heart, Loader2, CheckCircle2 } from "lucide-react";
 import { sfx } from "@/lib/sfx";
 
 interface CodeUnlockScreenProps {
@@ -15,6 +15,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   const [stage, setStage] = useState<Stage>("video_playing");
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPlayingVideo, setIsPlayingVideo] = useState(true);
   const [beatIndex, setBeatIndex] = useState(0);
@@ -67,6 +68,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
 
     setIsVerifying(true);
     setErrorMsg(null);
+    setIsSuccess(false);
 
     try {
       const res = await fetch("/api/rakhi/unlock", {
@@ -78,24 +80,33 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error || "Invalid passcode.");
+        setErrorMsg(data.error || "Incorrect Passcode. Enter your Birthday in DDMM order.");
         triggerShake();
         setIsVerifying(false);
+        setDigits(["", "", "", ""]);
+        inputRefs.current[0]?.focus();
         return;
       }
 
-      // Instantaneous < 1s unlock feedback
+      // Code matched successfully!
       sfx.playChime();
       setIsVerifying(false);
-      onUnlockSuccess(data.sisterName);
+      setIsSuccess(true);
+
+      setTimeout(() => {
+        onUnlockSuccess(data.sisterName);
+      }, 600);
     } catch {
       setErrorMsg("Connection error. Please try again.");
       triggerShake();
       setIsVerifying(false);
+      setDigits(["", "", "", ""]);
+      inputRefs.current[0]?.focus();
     }
   };
 
   const handleKeypadPress = (numStr: string) => {
+    if (isVerifying || isSuccess) return;
     sfx.playPop();
     if (errorMsg) setErrorMsg(null);
     const emptyIndex = digits.findIndex((d) => d === "");
@@ -112,6 +123,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   };
 
   const handleBackspace = () => {
+    if (isVerifying || isSuccess) return;
     sfx.playPop();
     if (errorMsg) setErrorMsg(null);
     const lastFilledIndex = digits.map((d) => d !== "").lastIndexOf(true);
@@ -123,6 +135,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
   };
 
   const handleChange = (index: number, value: string) => {
+    if (isVerifying || isSuccess) return;
     sfx.playPop();
     if (errorMsg) setErrorMsg(null);
     const cleaned = value.replace(/[^0-9]/g, "");
@@ -169,7 +182,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -10 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
             className="w-full max-w-lg rounded-3xl bg-white/95 border-2 border-rose-200/90 p-6 sm:p-8 space-y-6 shadow-[0_25px_60px_rgba(224,122,95,0.15)] text-gray-900 relative overflow-hidden text-center backdrop-blur-2xl will-change-transform"
           >
             {/* Play/Pause Controls */}
@@ -227,7 +240,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.35 }}
                 className="space-y-4 min-h-[110px] flex flex-col items-center justify-center"
               >
                 <div className="space-y-1.5">
@@ -280,10 +293,10 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               opacity: 1,
               scale: 1,
               y: 0,
-              x: shakeCount > 0 ? [-8, 8, -5, 5, 0] : 0,
+              x: shakeCount > 0 ? [-10, 10, -6, 6, 0] : 0,
             }}
             exit={{ opacity: 0, scale: 0.96, y: -10 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
             className="w-full max-w-md rounded-3xl bg-white/95 border-2 border-rose-200/90 p-5 sm:p-7 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] backdrop-blur-xl relative overflow-hidden text-center text-gray-900 will-change-transform"
           >
             {/* Replay Video Story Pill Button */}
@@ -292,6 +305,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                 onClick={() => {
                   setStage("video_playing");
                   setBeatIndex(0);
+                  setErrorMsg(null);
                 }}
                 className="px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-[#E07A5F] text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-rose-100 transition-all cursor-pointer shadow-xs active:scale-95"
               >
@@ -329,6 +343,7 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                     onChange={(e) => handleChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     placeholder={idx < 2 ? "D" : "M"}
+                    disabled={isVerifying || isSuccess}
                     className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl bg-rose-50/60 border-2 text-center text-2xl font-mono font-extrabold text-gray-900 focus:outline-none transition-all shadow-inner ${
                       digit
                         ? "border-[#E07A5F] bg-rose-100/90 shadow-xs"
@@ -342,16 +357,43 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               ))}
             </div>
 
-            {/* Error Feedback */}
-            <AnimatePresence>
-              {errorMsg && (
+            {/* DYNAMIC VERIFYING / SUCCESS / ERROR FEEDBACK BOX */}
+            <AnimatePresence mode="wait">
+              {isVerifying && (
                 <motion.div
+                  key="verifying-status"
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  className="flex items-center justify-center gap-1.5 text-xs text-rose-800 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl shadow-xs"
+                  className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-50 border border-amber-300 p-3 rounded-2xl shadow-xs"
                 >
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <Loader2 className="w-4 h-4 text-[#D97706] animate-spin shrink-0" />
+                  <span>CHECKING YOUR PASSCODE IN DATABASE... 🔑</span>
+                </motion.div>
+              )}
+
+              {isSuccess && (
+                <motion.div
+                  key="success-status"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex flex-col items-center justify-center gap-1 text-xs font-black uppercase tracking-wider text-emerald-900 bg-emerald-50 border-2 border-emerald-300 p-3.5 rounded-2xl shadow-md"
+                >
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 animate-bounce" />
+                  <span>PASSCODE MATCHED! UNLOCKING YOUR SURPRISE... 🎉</span>
+                </motion.div>
+              )}
+
+              {errorMsg && !isVerifying && !isSuccess && (
+                <motion.div
+                  key="error-status"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="flex items-center justify-center gap-2 text-xs text-rose-900 font-extrabold bg-rose-50 border-2 border-rose-300 p-3 rounded-2xl shadow-xs text-left"
+                >
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                   <span>{errorMsg}</span>
                 </motion.div>
               )}
@@ -364,7 +406,8 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
                   key={num}
                   whileTap={{ scale: 0.92 }}
                   onClick={() => handleKeypadPress(num)}
-                  className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
+                  disabled={isVerifying || isSuccess}
+                  className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation disabled:opacity-50"
                 >
                   {num}
                 </motion.button>
@@ -375,14 +418,16 @@ export default function CodeUnlockScreen({ onUnlockSuccess }: CodeUnlockScreenPr
               <motion.button
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleKeypadPress("0")}
-                className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
+                disabled={isVerifying || isSuccess}
+                className="py-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-gray-900 font-mono font-extrabold text-xl hover:bg-rose-100 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation disabled:opacity-50"
               >
                 0
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.92 }}
                 onClick={handleBackspace}
-                className="py-3 rounded-2xl bg-rose-100/80 border border-rose-300 text-gray-800 flex items-center justify-center hover:bg-rose-200 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation"
+                disabled={isVerifying || isSuccess}
+                className="py-3 rounded-2xl bg-rose-100/80 border border-rose-300 text-gray-800 flex items-center justify-center hover:bg-rose-200 active:scale-92 transition-transform shadow-xs cursor-pointer touch-manipulation disabled:opacity-50"
               >
                 <Delete className="w-5 h-5" />
               </motion.button>
