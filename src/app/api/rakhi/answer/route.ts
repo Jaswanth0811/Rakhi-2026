@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSisterSession } from "@/lib/security";
+import { generateAIAnswerReaction } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,26 +40,42 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Find custom option reaction if optionId provided
+    // Find custom option reaction or memory if optionId provided
     let optionReaction = null;
-    if (optionId) {
+    if (optionId && optionId !== "text_input" && optionId !== "rating_input") {
       optionReaction = await db.answerOption.findUnique({
         where: { id: optionId },
         include: { memory: true },
       });
     }
 
+    const question = await db.question.findUnique({
+      where: { id: questionId },
+    });
+
+    // Generate AI reaction dynamically based on the sister's answer
+    let responseMessage = optionReaction?.responseMessage;
+    let animationType = optionReaction?.animationType || "confetti";
+
+    if (!responseMessage && question) {
+      const aiReaction = await generateAIAnswerReaction(
+        question.question,
+        String(answer),
+        sessionUser.sisterName
+      );
+      responseMessage = aiReaction.responseMessage;
+      animationType = aiReaction.animationType;
+    }
+
     return NextResponse.json({
       success: true,
       responseId: savedResponse.id,
-      reaction: optionReaction
-        ? {
-            responseMessage: optionReaction.responseMessage,
-            animationType: optionReaction.animationType,
-            nextQuestionId: optionReaction.nextQuestionId,
-            memory: optionReaction.memory,
-          }
-        : null,
+      reaction: {
+        responseMessage: responseMessage || `Love your answer, ${sessionUser.sisterName}! ❤️`,
+        animationType,
+        nextQuestionId: optionReaction?.nextQuestionId || null,
+        memory: optionReaction?.memory || null,
+      },
     });
   } catch (error) {
     console.error("Answer API error:", error);
