@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Heart, Sparkles, Smile, PartyPopper } from "lucide-react";
+import { sfx } from "@/lib/sfx";
 
 interface ReactionOverlayProps {
   message?: string | null;
@@ -17,23 +18,25 @@ export default function ReactionOverlay({
   onDone,
 }: ReactionOverlayProps) {
   useEffect(() => {
+    sfx.playChime();
+
     if (
       animationType === "confetti" ||
       animationType === "celebration" ||
       animationType === "happy"
     ) {
       confetti({
-        particleCount: 70,
-        spread: 60,
+        particleCount: 75,
+        spread: 65,
         origin: { y: 0.55 },
         colors: ["#E07A5F", "#F4ACB7", "#D97706", "#FBBF24"],
       });
     }
 
-    // Auto-advance reaction in 1.1s for maximum speed
+    // Auto-advance Response Message in 1.6s or tap anytime
     const timer = setTimeout(() => {
       onDone();
-    }, 1100);
+    }, 1600);
 
     return () => clearTimeout(timer);
   }, [animationType, onDone]);
@@ -80,7 +83,7 @@ export default function ReactionOverlay({
           )}
 
           <div className="pt-1 text-[10px] text-gray-700 font-extrabold uppercase tracking-widest animate-pulse">
-            Tap anywhere to skip ⏩
+            Tap anywhere to continue ⏩
           </div>
         </motion.div>
       </motion.div>

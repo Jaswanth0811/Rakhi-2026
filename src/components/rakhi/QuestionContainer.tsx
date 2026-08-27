@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import MultipleChoiceQuestion from "./questions/MultipleChoiceQuestion";
@@ -43,17 +43,26 @@ interface QuestionContainerProps {
   onCompleteAll: () => void;
 }
 
+interface RecentHistoryItem {
+  question: string;
+  answer: string;
+}
+
 export default function QuestionContainer({
   questions,
   memories,
   onCompleteAll,
 }: QuestionContainerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recentHistory, setRecentHistory] = useState<RecentHistoryItem[]>([]);
   const [activeReaction, setActiveReaction] = useState<{
     message?: string | null;
     animationType?: string | null;
+    nextQuestionId?: string | null;
   } | null>(null);
 
+  const isAnsweringRef = useRef(false);
   const currentQ = questions[currentIndex];
 
   useEffect(() => {
@@ -64,46 +73,144 @@ export default function QuestionContainer({
 
   if (!currentQ) return null;
 
-  const handleAnswerSelect = (optionId: string, answerValue: string) => {
+  const handleAnswerSelect = async (optionId: string, answerValue: string) => {
+    if (isAnsweringRef.current) return;
+    isAnsweringRef.current = true;
+    setIsSubmitting(true);
     sfx.playPop();
+
     const option = currentQ.options?.find(
       (o) => o.id === optionId || o.value === answerValue || o.label === answerValue
     );
 
-    // Save answer in background without blocking or re-triggering UI state
-    fetch("/api/rakhi/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        questionId: currentQ.id,
-        answer: answerValue,
-        optionId: option?.id || null,
-      }),
-    }).catch((e) => console.error("Async answer save error:", e));
+    // If ImageChoice, find memory caption
+    const selectedMemory = memories.find((m) => m.id === optionId || m.caption === answerValue);
+    const photoContext = selectedMemory?.caption || option?.memory?.caption || null;
 
-    // Show the custom configured reaction message and animation for this exact option
-    if (option && (option.responseMessage || option.animationType)) {
-      setActiveReaction({
-        message: option.responseMessage,
-        animationType: option.animationType || "confetti",
+    // Fast fallback reaction generator if network is slow/offline
+    const getFastFallbackReaction = () => {
+      const ansLower = (answerValue || "").toLowerCase();
+      const qLower = currentQ.question.toLowerCase();
+
+      if (currentQ.type === "image_choice" || photoContext) {
+        return {
+          responseMessage: "Aww, you chose this memory! 🥹❤️ Some moments never get old.",
+          animationType: "emotional",
+        };
+      }
+      if (currentQ.type === "yes_no" || ansLower === "yes" || ansLower === "no") {
+        if (ansLower.includes("yes")) {
+          return {
+            responseMessage: "I knew you had good taste! 😌❤️",
+            animationType: "celebration",
+          };
+        }
+        return {
+          responseMessage: "WHAT?! 😭 Okay, we are definitely holding a sibling meeting! 😂",
+          animationType: "funny_shake",
+        };
+      }
+      if (currentQ.type === "rating" || !isNaN(Number(answerValue))) {
+        const num = Number(answerValue);
+        if (qLower.includes("annoy")) {
+          return {
+            responseMessage: `${num}/10?! You really had zero mercy on me 😭😂`,
+            animationType: "funny_shake",
+          };
+        }
+        return {
+          responseMessage: `Saving this ${num}/10 rating forever! No take-backs ❤️🌟`,
+          animationType: "celebration",
+        };
+      }
+      if (currentQ.type === "emoji") {
+        if (ansLower.includes("🥹") || ansLower.includes("❤️") || ansLower.includes("🥰")) {
+          return {
+            responseMessage: "Okay... that one emoji says way more than words ever could 🥹❤️",
+            animationType: "emotional",
+          };
+        }
+        return {
+          responseMessage: "Yep. That emoji basically summarizes our entire relationship 😂❤️",
+          animationType: "funny_shake",
+        };
+      }
+      if (currentQ.type === "text") {
+        return {
+          responseMessage: "Reading this means more to me than you know 🥹❤️",
+          animationType: "emotional",
+        };
+      }
+      return {
+        responseMessage: "I knew you'd pick that! Always bringing a smile! 🌸✨",
+        animationType: "confetti",
+      };
+    };
+
+    try {
+      // Create controller with 1.8s timeout race for instant UI feel
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1800);
+
+      const res = await fetch("/api/rakhi/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          questionId: currentQ.id,
+          answer: answerValue,
+          optionId: option?.id || null,
+          photoContext,
+          recentHistory: recentHistory.slice(-4),
+        }),
       });
-    } else {
-      // Advance to next question immediately if no reaction configured
-      advanceNext(option);
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const reaction = data.reaction || getFastFallbackReaction();
+        setActiveReaction({
+          message: reaction.responseMessage,
+          animationType: reaction.animationType || "confetti",
+          nextQuestionId: reaction.nextQuestionId || option?.nextQuestionId || null,
+        });
+      } else {
+        const fallback = getFastFallbackReaction();
+        setActiveReaction({
+          message: fallback.responseMessage,
+          animationType: fallback.animationType,
+          nextQuestionId: option?.nextQuestionId || null,
+        });
+      }
+    } catch {
+      // Abort or network error: use instantaneous smart fallback
+      const fallback = getFastFallbackReaction();
+      setActiveReaction({
+        message: fallback.responseMessage,
+        animationType: fallback.animationType,
+        nextQuestionId: option?.nextQuestionId || null,
+      });
+    } finally {
+      // Update session history
+      setRecentHistory((prev) => [
+        ...prev,
+        { question: currentQ.question, answer: answerValue },
+      ]);
+      setIsSubmitting(false);
     }
   };
 
   const handleReactionDone = () => {
-    const option = currentQ?.options?.find(
-      (o) => o.responseMessage === activeReaction?.message
-    );
+    const nextQId = activeReaction?.nextQuestionId;
     setActiveReaction(null);
-    advanceNext(option);
+    isAnsweringRef.current = false;
+    advanceNext(nextQId);
   };
 
-  const advanceNext = (option?: Option | null) => {
-    if (option?.nextQuestionId) {
-      const nextIdx = questions.findIndex((q) => q.id === option.nextQuestionId);
+  const advanceNext = (nextQuestionId?: string | null) => {
+    if (nextQuestionId) {
+      const nextIdx = questions.findIndex((q) => q.id === nextQuestionId);
       if (nextIdx !== -1) {
         setCurrentIndex(nextIdx);
         return;
@@ -113,7 +220,7 @@ export default function QuestionContainer({
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // Directly complete questions and open Final Letter
+      // Complete questionnaire and open Final Letter
       onCompleteAll();
     }
   };
@@ -202,14 +309,14 @@ export default function QuestionContainer({
             </h2>
 
             {/* Answer Options Component */}
-            <div className="w-full pt-2">
+            <div className={`w-full pt-2 ${isSubmitting ? "pointer-events-none opacity-80" : ""}`}>
               {renderQuestionComponent()}
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Reaction Overlay Modal */}
+      {/* Reaction Overlay Modal displaying AI Response Message */}
       {activeReaction && (
         <ReactionOverlay
           message={activeReaction.message}

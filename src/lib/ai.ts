@@ -34,6 +34,16 @@ export interface AIReactionResult {
   animationType: string;
 }
 
+export interface AIAnswerContext {
+  question: string;
+  questionType?: string;
+  answer: string;
+  options?: Array<{ label: string; value?: string }>;
+  photoContext?: string | null;
+  recentHistory?: Array<{ question: string; answer: string }>;
+  sisterName?: string;
+}
+
 export interface AIExperienceSummaryResult {
   title: string;
   summaryMessage: string;
@@ -109,46 +119,99 @@ Respond ONLY with a valid raw JSON object matching this structure (no markdown f
   return fallbackDynamicAnalysis(message);
 }
 
+/**
+ * Generates an AI-Powered "Response Message" dynamically based on:
+ * Question + Sister's Answer + Question Type + Options + Photo Metadata + Recent History.
+ */
 export async function generateAIAnswerReaction(
-  question: string,
-  answer: string,
-  sisterName: string = "Sister"
+  contextOrQuestion: string | AIAnswerContext,
+  legacyAnswer?: string,
+  legacySisterName: string = "Sister"
 ): Promise<AIReactionResult> {
+  // Normalize parameters
+  let context: AIAnswerContext;
+  if (typeof contextOrQuestion === "string") {
+    context = {
+      question: contextOrQuestion,
+      answer: legacyAnswer || "",
+      sisterName: legacySisterName,
+    };
+  } else {
+    context = contextOrQuestion;
+  }
+
+  const {
+    question,
+    questionType = "multiple_choice",
+    answer,
+    options = [],
+    photoContext,
+    recentHistory = [],
+    sisterName = "Sister",
+  } = context;
+
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (apiKey && apiKey.trim() !== "") {
     const modelNames = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"];
+
+    // Format options context
+    const optionsText = options.length > 0
+      ? `Available options: [${options.map((o) => o.label).join(", ")}]`
+      : "";
+
+    // Format recent history context
+    const historyText = recentHistory.length > 0
+      ? `Recent answers in this questionnaire:\n` +
+        recentHistory.map((h, i) => `${i + 1}. Q: "${h.question}" -> A: "${h.answer}"`).join("\n")
+      : "";
+
+    const prompt = `
+You are a loving, playful, slightly teasing, warm brother on Raksha Bandhan reacting directly to your sister ${sisterName} during an interactive Rakhi questionnaire.
+
+Question Type: ${questionType}
+Question: "${question}"
+${optionsText}
+${photoContext ? `Selected Photo Context: "${photoContext}"` : ""}
+Her Answer: "${answer}"
+${historyText}
+
+Personality & Guidelines:
+1. Write a 1-sentence lively, natural sibling Response Message (warm, humorous, playfully teasing, or deeply heartfelt).
+2. React SPECIFICALLY to what she answered.
+   - If Multiple Choice: React to why she picked that choice among the options.
+   - If Yes/No: Give a distinct, funny or emotional reaction for YES vs NO.
+   - If Emoji: Interpret the humorous or emotional meaning of the emoji in context of the question.
+   - If Rating Slider: Understand Question + Rating together (e.g. 10/10 annoyance vs 10/10 best brother).
+   - If Text Box: React genuinely to her exact typed words.
+   - If Photo Choice: Warmly acknowledge the memory photo lovingly without hallucinating new facts.
+   - If Recent History is provided: Naturally and wittily connect to an earlier answer when appropriate.
+3. Keep it punchy (under 18 words).
+4. Strictly NEVER sound like an AI, chatbot, or survey (NO "Thank you for your response", "As an AI", "Great choice!", "Your answer has been recorded").
+5. Choose one animationType from: ["confetti", "celebration", "emotional", "funny_shake", "happy"].
+
+Respond ONLY in raw JSON format:
+{
+  "responseMessage": "Your 1-sentence natural reaction here!",
+  "animationType": "confetti"
+}
+`;
 
     for (const modelName of modelNames) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: modelName });
 
-        const prompt = `
-You are a loving and playful brother responding directly to your sister ${sisterName} after she answered an interactive Rakhi question.
-Question: "${question}"
-Her Answer: "${answer}"
-
-Rules:
-1. Write a 1-sentence lively, natural sibling reaction from the brother (warm, humorous, teasing, or heartfelt).
-2. Keep it under 20 words.
-3. Pick one animationType from: ["confetti", "celebration", "emotional", "funny_shake", "happy"].
-
-Respond ONLY in raw JSON format:
-{
-  "responseMessage": "Your 1-sentence reaction here!",
-  "animationType": "confetti"
-}
-`;
-
         const response = await model.generateContent(prompt);
         const text = response.response.text();
         const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const parsed = JSON.parse(cleaned) as AIReactionResult;
 
-        if (parsed.responseMessage) {
+        if (parsed.responseMessage && parsed.responseMessage.trim().length > 0) {
+          // Clean quotes if any
+          const cleanMsg = parsed.responseMessage.replace(/^["“”]/, "").replace(/["“”]$/, "").trim();
           return {
-            responseMessage: parsed.responseMessage,
+            responseMessage: cleanMsg,
             animationType: parsed.animationType || "confetti",
           };
         }
@@ -158,55 +221,149 @@ Respond ONLY in raw JSON format:
     }
   }
 
-  // Fast intelligent fallback
-  return fallbackAnswerReaction(question, answer, sisterName);
+  // Fast intelligent contextual fallback
+  return fallbackAnswerReaction(context);
 }
 
-function fallbackAnswerReaction(
-  question: string,
-  answer: string,
-  sisterName: string
-): AIReactionResult {
-  const ansLower = answer.toLowerCase();
-  const qLower = question.toLowerCase();
+function fallbackAnswerReaction(context: AIAnswerContext): AIReactionResult {
+  const {
+    question,
+    questionType = "multiple_choice",
+    answer,
+    photoContext,
+    sisterName = "Sister",
+  } = context;
 
-  if (ansLower.includes("yes") || ansLower.includes("definitely") || ansLower.includes("agree")) {
-    return {
-      responseMessage: `Haha! I totally knew you'd pick that, ${sisterName}! 😂❤️`,
-      animationType: "celebration",
-    };
-  }
+  const ansLower = (answer || "").toLowerCase().trim();
+  const qLower = (question || "").toLowerCase().trim();
 
-  if (ansLower.includes("no") || ansLower.includes("never") || ansLower.includes("disagree")) {
+  // Photo Memory Choice
+  if (questionType === "image_choice" || photoContext) {
     return {
-      responseMessage: `Wait, really?! How could you forget that, ${sisterName}?! 😜✨`,
-      animationType: "funny_shake",
-    };
-  }
-
-  if (qLower.includes("rate") || qLower.includes("scale") || !isNaN(Number(answer))) {
-    const num = Number(answer);
-    if (num >= 8) {
-      return {
-        responseMessage: `10/10 sibling love forever! Best sister in the world! 🌟❤️`,
-        animationType: "celebration",
-      };
-    }
-    return {
-      responseMessage: `Aha! Anything below 10 is definitely a glitch! 😂 You are the best!`,
-      animationType: "happy",
-    };
-  }
-
-  if (ansLower.includes("love") || ansLower.includes("heart") || ansLower.includes("promise") || qLower.includes("promise")) {
-    return {
-      responseMessage: `I will cherish that promise and hold it close forever, ${sisterName}. 🥹❤️`,
+      responseMessage: `Aww, you chose this memory! 🥹❤️ Some moments never get old.`,
       animationType: "emotional",
     };
   }
 
+  // Yes / No Choice
+  if (questionType === "yes_no" || ansLower === "yes" || ansLower === "no") {
+    if (ansLower.includes("yes") || ansLower.includes("definitely") || ansLower.includes("agree")) {
+      return {
+        responseMessage: `I knew you had good taste, ${sisterName}! 😌❤️`,
+        animationType: "celebration",
+      };
+    }
+    return {
+      responseMessage: `WHAT?! 😭 Okay, we are definitely holding a sibling meeting! 😂`,
+      animationType: "funny_shake",
+    };
+  }
+
+  // Rating Slider Choice
+  if (questionType === "rating" || !isNaN(Number(answer))) {
+    const num = Number(answer);
+    if (qLower.includes("annoy") || qLower.includes("trouble") || qLower.includes("irritat")) {
+      if (num >= 8) {
+        return {
+          responseMessage: `${num}/10?! You really had zero mercy on me 😭😂`,
+          animationType: "funny_shake",
+        };
+      }
+      return {
+        responseMessage: `Only ${num}/10? Wow, I must be on my best behavior! 😇`,
+        animationType: "happy",
+      };
+    }
+
+    if (num >= 8) {
+      return {
+        responseMessage: `Okay... I'm saving this ${num}/10 rating forever! No take-backs ❤️🌟`,
+        animationType: "celebration",
+      };
+    }
+    return {
+      responseMessage: `Aha! Anything below 10 is definitely a phone glitch! 😂❤️`,
+      animationType: "happy",
+    };
+  }
+
+  // Emoji Choice
+  if (questionType === "emoji") {
+    if (ansLower.includes("🥹") || ansLower.includes("🥺") || ansLower.includes("❤️") || ansLower.includes("🥰") || ansLower.includes("💖")) {
+      return {
+        responseMessage: `Okay... that one emoji says way more than words ever could 🥹❤️`,
+        animationType: "emotional",
+      };
+    }
+    if (ansLower.includes("😂") || ansLower.includes("🤣") || ansLower.includes("😜") || ansLower.includes("😆")) {
+      return {
+        responseMessage: `Yep. That emoji basically summarizes our entire relationship 😂❤️`,
+        animationType: "funny_shake",
+      };
+    }
+    if (ansLower.includes("😈") || ansLower.includes("😏") || ansLower.includes("🔥") || ansLower.includes("💥")) {
+      return {
+        responseMessage: `I knew our bond had a little chaos hiding in it 😈😂`,
+        animationType: "celebration",
+      };
+    }
+    return {
+      responseMessage: `Haha, that emoji is 100% accurate for us! ✨`,
+      animationType: "happy",
+    };
+  }
+
+  // Text Response Box
+  if (questionType === "text") {
+    if (ansLower.includes("thank") || ansLower.includes("support") || ansLower.includes("love") || ansLower.includes("care")) {
+      return {
+        responseMessage: `You never have to thank me for that. I will always be there for you ❤️🥹`,
+        animationType: "emotional",
+      };
+    }
+    if (ansLower.includes("annoy") || ansLower.includes("idiot") || ansLower.includes("crazy") || ansLower.includes("stupid")) {
+      return {
+        responseMessage: `And yet somehow you still keep me around as your brother 😂❤️`,
+        animationType: "funny_shake",
+      };
+    }
+    return {
+      responseMessage: `Reading this means more to me than you know, ${sisterName} 🥹❤️`,
+      animationType: "emotional",
+    };
+  }
+
+  // Multiple Choice Specific Checks
+  if (ansLower.includes("joke") || ansLower.includes("funny") || ansLower.includes("laugh")) {
+    return {
+      responseMessage: `I knew my terrible jokes would win! 😂❤️`,
+      animationType: "funny_shake",
+    };
+  }
+
+  if (ansLower.includes("caring") || ansLower.includes("kind") || ansLower.includes("protect") || ansLower.includes("help")) {
+    return {
+      responseMessage: `Aww, so you actually notice all the little things I do 🥹❤️`,
+      animationType: "emotional",
+    };
+  }
+
+  if (ansLower.includes("intelligent") || ansLower.includes("smart") || ansLower.includes("brain")) {
+    return {
+      responseMessage: `Finally! Someone in the family acknowledges my genius! 🧠✨`,
+      animationType: "celebration",
+    };
+  }
+
+  if (ansLower.includes("everything") || ansLower.includes("all") || ansLower.includes("both")) {
+    return {
+      responseMessage: `Aww, 10/10 best answer! That's why you're my favorite sister 🌸❤️`,
+      animationType: "celebration",
+    };
+  }
+
   return {
-    responseMessage: `That's why you're my favorite sister, ${sisterName}! Always bringing a smile! 🌸✨`,
+    responseMessage: `I knew you'd pick that, ${sisterName}! Always bringing a smile! 🌸✨`,
     animationType: "confetti",
   };
 }

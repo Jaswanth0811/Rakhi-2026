@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const sessionId = req.cookies.get("rakhi_session_id")?.value || "default_session";
     const body = await req.json();
-    const { questionId, answer, optionId } = body;
+    const { questionId, answer, optionId, photoContext, recentHistory } = body;
 
     if (!questionId || answer === undefined) {
       return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save response
+    // Save response in database
     const savedResponse = await db.userResponse.create({
       data: {
         sisterId: sessionUser.sisterId,
@@ -49,20 +49,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Fetch question with all its options for full AI context
     const question = await db.question.findUnique({
       where: { id: questionId },
+      include: {
+        options: true,
+      },
     });
 
-    // Generate AI reaction dynamically based on the sister's answer
+    // Determine Response Message:
+    // If pre-configured manual responseMessage exists on the option, use it.
+    // Otherwise, generate dynamically using AI with full context.
     let responseMessage = optionReaction?.responseMessage;
     let animationType = optionReaction?.animationType || "confetti";
 
     if (!responseMessage && question) {
-      const aiReaction = await generateAIAnswerReaction(
-        question.question,
-        String(answer),
-        sessionUser.sisterName
-      );
+      const aiReaction = await generateAIAnswerReaction({
+        question: question.question,
+        questionType: question.type,
+        answer: String(answer),
+        options: (question.options || []).map((o) => ({ label: o.label, value: o.value })),
+        photoContext: photoContext || (optionReaction?.memory ? optionReaction.memory.caption : null),
+        recentHistory: Array.isArray(recentHistory) ? recentHistory.slice(-4) : [],
+        sisterName: sessionUser.sisterName,
+      });
+
       responseMessage = aiReaction.responseMessage;
       animationType = aiReaction.animationType;
     }
@@ -72,7 +83,7 @@ export async function POST(req: NextRequest) {
       responseId: savedResponse.id,
       reaction: {
         responseMessage: responseMessage || `Love your answer, ${sessionUser.sisterName}! ❤️`,
-        animationType,
+        animationType: animationType || "confetti",
         nextQuestionId: optionReaction?.nextQuestionId || null,
         memory: optionReaction?.memory || null,
       },
