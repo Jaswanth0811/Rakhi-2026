@@ -66,7 +66,9 @@ export default function QuestionContainer({
 
   const handleAnswerSelect = (optionId: string, answerValue: string) => {
     sfx.playPop();
-    const option = currentQ.options?.find((o) => o.id === optionId || o.value === answerValue);
+    const option = currentQ.options?.find(
+      (o) => o.id === optionId || o.value === answerValue || o.label === answerValue
+    );
 
     // Save answer in background without blocking or re-triggering UI state
     fetch("/api/rakhi/answer", {
@@ -79,14 +81,14 @@ export default function QuestionContainer({
       }),
     }).catch((e) => console.error("Async answer save error:", e));
 
-    // If this option has a specific custom response message / animation, show it once
+    // Show the custom configured reaction message and animation for this exact option
     if (option && (option.responseMessage || option.animationType)) {
       setActiveReaction({
         message: option.responseMessage,
         animationType: option.animationType || "confetti",
       });
     } else {
-      // Advance to next question immediately
+      // Advance to next question immediately if no reaction configured
       advanceNext(option);
     }
   };
