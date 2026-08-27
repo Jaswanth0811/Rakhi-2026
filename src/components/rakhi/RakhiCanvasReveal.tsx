@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Sparkles, Heart, ShieldCheck } from "lucide-react";
@@ -13,89 +13,135 @@ interface RakhiCanvasRevealProps {
 
 interface BalloonData {
   id: number;
-  left: number; // percentage
-  size: number;
+  left: number; // percentage across screen
+  size: number; // balloon width in px
   color: string;
   highlight: string;
-  duration: number; // seconds
-  delay: number; // seconds
+  duration: number; // float duration in seconds
+  delay: number; // animation delay in seconds
   popped: boolean;
+}
+
+interface FloatingHeartData {
+  id: number;
+  left: number;
+  symbol: string;
+  size: number;
+  duration: number;
+  delay: number;
 }
 
 const BALLOON_PALETTES = [
   { color: "#FF4B72", highlight: "#FFA3B8" }, // Vibrant Pink
   { color: "#E07A5F", highlight: "#F8C5B8" }, // Terracotta
-  { color: "#FF85A1", highlight: "#FFCCD7" }, // Soft Rose
+  { color: "#FF85A1", highlight: "#FFCCD7" }, // Soft Blush
   { color: "#FB8500", highlight: "#FFD199" }, // Amber Orange
   { color: "#FFB703", highlight: "#FFE599" }, // Honey Gold
   { color: "#9D4EDD", highlight: "#D8B4F8" }, // Lavender Violet
+  { color: "#E63946", highlight: "#FFA8AF" }, // Crimson Red
   { color: "#06D6A0", highlight: "#A3F7E2" }, // Mint Teal
 ];
+
+const HEART_SYMBOLS = ["💖", "❤️", "💕", "💗", "💓", "💞", "💝", "✨"];
 
 export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRevealProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [balloons, setBalloons] = useState<BalloonData[]>([]);
+  const [hearts, setHearts] = useState<FloatingHeartData[]>([]);
   const [popParticles, setPopParticles] = useState<
     { id: number; x: number; y: number; color: string; symbol: string }[]
   >([]);
 
-  // Fixed floating balloon slots (left and right flanks to keep center clear and 60fps smooth)
+  // Initialize floating balloons distributed across mobile & desktop screens
   useEffect(() => {
-    const slots = [
-      { left: 3, delay: 0, dur: 8 },
-      { left: 12, delay: 2.5, dur: 10 },
-      { left: 20, delay: 1, dur: 9 },
-      { left: 75, delay: 0.5, dur: 8.5 },
-      { left: 84, delay: 3, dur: 10.5 },
-      { left: 93, delay: 1.8, dur: 9 },
+    const balloonPositions = [
+      { left: 4, delay: 0, dur: 8 },
+      { left: 14, delay: 2.2, dur: 9.5 },
+      { left: 24, delay: 4.5, dur: 8.5 },
+      { left: 36, delay: 1.2, dur: 10 },
+      { left: 48, delay: 3.5, dur: 9 },
+      { left: 60, delay: 0.8, dur: 8.2 },
+      { left: 72, delay: 2.8, dur: 10.2 },
+      { left: 84, delay: 1.5, dur: 8.8 },
+      { left: 93, delay: 4.0, dur: 9.2 },
     ];
 
-    const initial = slots.map((s, i) => {
+    const initialBalloons: BalloonData[] = balloonPositions.map((pos, i) => {
       const palette = BALLOON_PALETTES[i % BALLOON_PALETTES.length];
       return {
         id: i + 1,
-        left: s.left,
-        size: 48 + (i % 3) * 8,
+        left: pos.left,
+        size: 44 + (i % 3) * 8,
         color: palette.color,
         highlight: palette.highlight,
-        duration: s.dur,
-        delay: s.delay,
+        duration: pos.dur,
+        delay: pos.delay,
         popped: false,
       };
     });
-    setBalloons(initial);
+    setBalloons(initialBalloons);
+
+    // 14 Floating Heart Symbols across the screen
+    const heartPositions = [
+      { left: 6, dur: 6.5, delay: 0, sym: "💖", sz: 24 },
+      { left: 15, dur: 8.0, delay: 1.8, sym: "❤️", sz: 20 },
+      { left: 23, dur: 7.2, delay: 3.5, sym: "💕", sz: 22 },
+      { left: 32, dur: 9.0, delay: 0.5, sym: "✨", sz: 20 },
+      { left: 42, dur: 7.8, delay: 2.5, sym: "💗", sz: 24 },
+      { left: 52, dur: 8.5, delay: 4.2, sym: "💖", sz: 26 },
+      { left: 63, dur: 6.8, delay: 1.2, sym: "💓", sz: 22 },
+      { left: 71, dur: 9.2, delay: 3.0, sym: "💞", sz: 24 },
+      { left: 81, dur: 7.5, delay: 0.2, sym: "✨", sz: 20 },
+      { left: 89, dur: 8.2, delay: 2.0, sym: "💝", sz: 24 },
+      { left: 95, dur: 7.0, delay: 4.0, sym: "💖", sz: 22 },
+    ];
+
+    const initialHearts: FloatingHeartData[] = heartPositions.map((h, i) => ({
+      id: i + 1,
+      left: h.left,
+      symbol: h.sym,
+      size: h.sz,
+      duration: h.dur,
+      delay: h.delay,
+    }));
+    setHearts(initialHearts);
   }, []);
 
-  // Multi-stage celebratory confetti explosion
+  // Multi-stage celebratory confetti paper cannons and streamers explosion
   const triggerGrandCelebration = useCallback(() => {
     sfx.playFanfare();
 
     // Central paper burst
     confetti({
-      particleCount: 75,
-      spread: 90,
+      particleCount: 80,
+      spread: 95,
       origin: { y: 0.55 },
       colors: ["#E07A5F", "#F4ACB7", "#D97706", "#FBBF24", "#FF4B72", "#FFFFFF", "#FFD700"],
-      ticks: 180,
+      ticks: 200,
       gravity: 0.85,
-      scalar: 1.1,
+      scalar: 1.15,
+      shapes: ["square", "circle"],
     });
 
     // Side cannon blasts
     setTimeout(() => {
       confetti({
-        particleCount: 40,
+        particleCount: 45,
         angle: 60,
-        spread: 60,
+        spread: 65,
         origin: { x: 0, y: 0.75 },
-        colors: ["#FF4B72", "#FFB703", "#9D4EDD", "#FFFFFF"],
+        colors: ["#FF4B72", "#FFB703", "#9D4EDD", "#FFFFFF", "#F4ACB7"],
+        ticks: 200,
+        gravity: 0.9,
       });
       confetti({
-        particleCount: 40,
+        particleCount: 45,
         angle: 120,
-        spread: 60,
+        spread: 65,
         origin: { x: 1, y: 0.75 },
-        colors: ["#E07A5F", "#D97706", "#06D6A0", "#FFFFFF"],
+        colors: ["#E07A5F", "#D97706", "#06D6A0", "#FFFFFF", "#FB8500"],
+        ticks: 200,
+        gravity: 0.9,
       });
     }, 150);
   }, []);
@@ -104,7 +150,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
   const handleBalloonPop = (id: number, x: number, y: number, color: string) => {
     sfx.playPop();
 
-    // Spawn 4 fast lightweight particles
+    // Spawn fast lightweight particles
     const newParticles = [
       { id: Date.now() + 1, x: x - 15, y: y - 10, color, symbol: "💖" },
       { id: Date.now() + 2, x: x + 15, y: y - 10, color, symbol: "✨" },
@@ -117,14 +163,14 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
     }, 700);
 
     confetti({
-      particleCount: 20,
-      spread: 50,
+      particleCount: 25,
+      spread: 55,
       origin: { x: x / window.innerWidth, y: y / window.innerHeight },
-      colors: [color, "#FFFFFF", "#FFD700"],
+      colors: [color, "#FFFFFF", "#FFD700", "#FF4B72"],
       gravity: 0.9,
     });
 
-    // Mark balloon popped and smoothly respawn
+    // Mark balloon popped and respawn after 2.8s
     setBalloons((prev) =>
       prev.map((b) => (b.id === id ? { ...b, popped: true } : b))
     );
@@ -133,7 +179,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
       setBalloons((prev) =>
         prev.map((b) => (b.id === id ? { ...b, popped: false } : b))
       );
-    }, 3000);
+    }, 2800);
   };
 
   const handleNextStep = () => {
@@ -141,7 +187,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
     onNext();
   };
 
-  // Ultra-optimized 60FPS Canvas Drawing Loop (no expensive shadowBlur)
+  // 60FPS Canvas Drawing Loop
   useEffect(() => {
     triggerGrandCelebration();
 
@@ -154,7 +200,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
     let angle = 0;
 
     const resize = () => {
-      const size = Math.min(window.innerWidth * 0.7, 260);
+      const size = Math.min(window.innerWidth * 0.65, 250);
       canvas.width = size;
       canvas.height = size;
     };
@@ -190,7 +236,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
         const py = Math.sin(petalAngle) * baseRadius;
 
         ctx.beginPath();
-        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.arc(px, py, 11, 0, Math.PI * 2);
         ctx.fillStyle = i % 2 === 0 ? "#E07A5F" : "#D97706";
         ctx.fill();
 
@@ -233,9 +279,9 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
   }, [triggerGrandCelebration]);
 
   return (
-    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900 select-none touch-manipulation">
+    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-3 sm:p-6 text-center overflow-hidden bg-gradient-to-br from-[#FAF8F5] via-[#FFF5F7] to-[#F5EFE6] text-gray-900 select-none touch-manipulation">
       {/* Ambient background glow */}
-      <div className="absolute w-[350px] h-[350px] sm:w-[550px] sm:h-[550px] rounded-full bg-pink-200/50 blur-[120px] pointer-events-none" />
+      <div className="absolute w-[350px] h-[350px] sm:w-[550px] sm:h-[550px] rounded-full bg-pink-200/50 blur-[120px] pointer-events-none z-0" />
 
       {/* HARDWARE ACCELERATED 60FPS CSS STYLES */}
       <style jsx global>{`
@@ -244,7 +290,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
             transform: translate3d(0, 105vh, 0);
             opacity: 0;
           }
-          10% {
+          8% {
             opacity: 0.95;
           }
           90% {
@@ -260,14 +306,14 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
             transform: translate3d(0, 105vh, 0) scale(0.7);
             opacity: 0;
           }
-          15% {
-            opacity: 0.85;
+          10% {
+            opacity: 0.9;
           }
           85% {
-            opacity: 0.85;
+            opacity: 0.9;
           }
           100% {
-            transform: translate3d(0, -15vh, 0) scale(1.1);
+            transform: translate3d(0, -15vh, 0) scale(1.15);
             opacity: 0;
           }
         }
@@ -281,32 +327,95 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
         }
       `}</style>
 
-      {/* FLOATING HEARTS (GPU-Accelerated 60FPS) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {[
-          { left: 6, dur: 7, delay: 0, sym: "💖", sz: 24 },
-          { left: 16, dur: 9, delay: 2, sym: "❤️", sz: 20 },
-          { left: 25, dur: 8, delay: 4, sym: "💕", sz: 22 },
-          { left: 78, dur: 7.5, delay: 1, sym: "✨", sz: 22 },
-          { left: 88, dur: 9.5, delay: 3, sym: "💖", sz: 26 },
-        ].map((h, i) => (
+      {/* MAIN RAKHI CEREMONY CARD (Layer z-10) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-sm sm:max-w-md bg-white/95 border-2 border-rose-200/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-7 space-y-4 shadow-[0_20px_50px_rgba(224,122,95,0.15)] text-center flex flex-col items-center will-change-transform"
+      >
+        {/* Festive Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 border border-rose-300 text-[#E07A5F] text-xs font-black tracking-widest uppercase shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" />
+          <span>Virtual Rakhi Ceremony</span>
+        </div>
+
+        {/* Title */}
+        <h2 className="font-serif text-2xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
+          Virtual Rakhi Tied By <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E07A5F] via-[#F4ACB7] to-[#D97706]">
+            {sisterName} ❤️
+          </span>
+        </h2>
+        <p className="text-xs text-gray-700 font-bold">
+          Your sacred thread of love tied on your brother&apos;s wrist.
+        </p>
+
+        {/* 3D Rotating Canvas Rakhi Mandala Emblem */}
+        <div
+          onClick={() => {
+            sfx.playToyPop();
+            triggerGrandCelebration();
+          }}
+          className="relative my-1 cursor-pointer group"
+          title="Tap Rakhi for Celebration Explosion! 🎈💖🎊"
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] rounded-full drop-shadow-[0_12px_28px_rgba(224,122,95,0.2)] group-hover:scale-105 transition-transform duration-200 active:scale-95"
+          />
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest text-[#E07A5F] bg-white px-3 py-1 rounded-full border border-rose-200 whitespace-nowrap shadow-md flex items-center gap-1">
+            <span>TAP RAKHI OR BALLOONS TO POP! 🎈💖🎊</span>
+          </span>
+        </div>
+
+        {/* Sister's Blessing & Pledge */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50/80 border border-rose-200 space-y-1.5 w-full text-center shadow-inner">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-black text-[#E07A5F] uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-[#E07A5F]" />
+            <span>Sister&apos;s Blessing & Brother&apos;s Sacred Pledge</span>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-800 font-bold leading-relaxed">
+            &ldquo;Dear {sisterName}, as you tie this sacred Rakhi on my wrist, I pledge to forever protect your happiness, stand by your dreams, and love you endlessly.&rdquo; ❤️
+          </p>
+        </div>
+
+        {/* View Summary Action Button */}
+        <motion.button
+          type="button"
+          onClick={handleNextStep}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          style={{
+            background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
+          }}
+          className="w-full py-3.5 sm:py-4 rounded-2xl text-white font-black tracking-widest text-sm sm:text-base shadow-lg shadow-rose-200/60 cursor-pointer flex items-center justify-center gap-2 border border-rose-200 select-none active:scale-95 transition-all"
+        >
+          <span>VIEW SUMMARY</span>
+          <Heart className="w-4 h-4 text-white fill-white" />
+        </motion.button>
+      </motion.div>
+
+      {/* FLOATING HEARTS (Layer z-30, In Front of background & sides, 60FPS) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
+        {hearts.map((h) => (
           <div
-            key={i}
+            key={h.id}
             style={{
               left: `${h.left}%`,
-              fontSize: `${h.sz}px`,
-              animationDuration: `${h.dur}s`,
+              fontSize: `${h.size}px`,
+              animationDuration: `${h.duration}s`,
               animationDelay: `${h.delay}s`,
             }}
-            className="absolute gpu-heart select-none drop-shadow-xs"
+            className="absolute gpu-heart select-none drop-shadow-md will-change-transform"
           >
-            {h.sym}
+            {h.symbol}
           </div>
         ))}
       </div>
 
-      {/* FLOATING BALLOONS (GPU-Accelerated 60FPS, Clickable) */}
-      <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none">
+      {/* FLOATING & POPPABLE BALLOONS (Layer z-40, Floating in front & around card, Clickable) */}
+      <div className="absolute inset-0 overflow-hidden z-40 pointer-events-none">
         {balloons.map((b) =>
           !b.popped ? (
             <div
@@ -321,17 +430,17 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
                 const rect = e.currentTarget.getBoundingClientRect();
                 handleBalloonPop(b.id, rect.left + rect.width / 2, rect.top + rect.height / 2, b.color);
               }}
-              className="absolute gpu-balloon pointer-events-auto cursor-pointer flex flex-col items-center select-none active:scale-90 transition-transform duration-100 touch-manipulation"
+              className="absolute gpu-balloon pointer-events-auto cursor-pointer flex flex-col items-center select-none active:scale-85 transition-transform duration-100 touch-manipulation drop-shadow-lg"
               title="Tap to Pop! 🎈"
             >
-              {/* Balloon Body */}
+              {/* Balloon 3D Oval Body */}
               <div
                 style={{
                   width: `${b.size}px`,
                   height: `${b.size * 1.22}px`,
                   borderRadius: "50% 50% 50% 50% / 40% 40% 60% 60%",
                   background: `radial-gradient(circle at 35% 30%, ${b.highlight} 0%, ${b.color} 75%, #4a0010 100%)`,
-                  boxShadow: `0 6px 14px ${b.color}35`,
+                  boxShadow: `0 6px 14px ${b.color}40`,
                 }}
                 className="relative"
               >
@@ -341,7 +450,7 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
                     width: `${b.size * 0.22}px`,
                     height: `${b.size * 0.38}px`,
                     borderRadius: "50%",
-                    background: "rgba(255, 255, 255, 0.6)",
+                    background: "rgba(255, 255, 255, 0.65)",
                     transform: "rotate(-25deg)",
                   }}
                   className="absolute top-1.5 left-1.5"
@@ -381,82 +490,13 @@ export default function RakhiCanvasReveal({ sisterName, onNext }: RakhiCanvasRev
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="fixed pointer-events-none text-xl z-50 drop-shadow-xs"
+              className="fixed pointer-events-none text-xl z-50 drop-shadow-md"
             >
               {p.symbol}
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
-
-      {/* MAIN RAKHI CEREMONY CARD (Layer 30, High Performance) */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-30 pointer-events-auto w-full max-w-md bg-white/95 border-2 border-rose-200/80 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 space-y-5 shadow-[0_20px_50px_rgba(224,122,95,0.15)] text-center flex flex-col items-center will-change-transform"
-      >
-        {/* Festive Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-50 border border-rose-300 text-[#E07A5F] text-xs font-black tracking-widest uppercase shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#E07A5F]" />
-          <span>Virtual Rakhi Ceremony</span>
-        </div>
-
-        {/* Title */}
-        <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
-          Virtual Rakhi Tied By <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E07A5F] via-[#F4ACB7] to-[#D97706]">
-            {sisterName} ❤️
-          </span>
-        </h2>
-        <p className="text-xs text-gray-700 font-bold">
-          Your sacred thread of love tied on your brother&apos;s wrist.
-        </p>
-
-        {/* 3D Rotating Canvas Rakhi Mandala Emblem */}
-        <div
-          onClick={() => {
-            sfx.playToyPop();
-            triggerGrandCelebration();
-          }}
-          className="relative my-1 cursor-pointer group"
-          title="Tap Rakhi for Celebration Explosion! 🎈💖🎊"
-        >
-          <canvas
-            ref={canvasRef}
-            className="w-[220px] h-[220px] sm:w-[260px] sm:h-[260px] rounded-full drop-shadow-[0_12px_28px_rgba(224,122,95,0.2)] group-hover:scale-105 transition-transform duration-200 active:scale-95"
-          />
-          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest text-[#E07A5F] bg-white px-3 py-1 rounded-full border border-rose-200 whitespace-nowrap shadow-md flex items-center gap-1">
-            <span>TAP RAKHI OR BALLOONS TO POP! 🎈💖🎊</span>
-          </span>
-        </div>
-
-        {/* Sister's Blessing & Pledge */}
-        <div className="p-4 rounded-2xl bg-rose-50/80 border border-rose-200 space-y-1.5 w-full text-center shadow-inner">
-          <div className="flex items-center justify-center gap-1.5 text-xs font-black text-[#E07A5F] uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-[#E07A5F]" />
-            <span>Sister&apos;s Blessing & Brother&apos;s Sacred Pledge</span>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-800 font-bold leading-relaxed">
-            &ldquo;Dear {sisterName}, as you tie this sacred Rakhi on my wrist, I pledge to forever protect your happiness, stand by your dreams, and love you endlessly.&rdquo; ❤️
-          </p>
-        </div>
-
-        {/* View Summary Action Button */}
-        <motion.button
-          type="button"
-          onClick={handleNextStep}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
-          style={{
-            background: "linear-gradient(135deg, #E07A5F 0%, #F4ACB7 50%, #D97706 100%)",
-          }}
-          className="w-full py-4 rounded-2xl text-white font-black tracking-widest text-sm sm:text-base shadow-lg shadow-rose-200/60 cursor-pointer flex items-center justify-center gap-2 border border-rose-200 select-none active:scale-95 transition-all"
-        >
-          <span>VIEW SUMMARY</span>
-          <Heart className="w-4 h-4 text-white fill-white" />
-        </motion.button>
-      </motion.div>
     </div>
   );
 }
